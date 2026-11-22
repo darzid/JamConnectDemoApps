@@ -76,6 +76,12 @@
       </button>
       
       <div>
+        <div id="volume" class="flex items-center gap-1">
+          <label class="text-xs font-bold text-slate-800">LEVEL:</label>
+          <input type="range" id="volume-slider" min="0" max="100" value="100" class="w-24 accent-slate-800 cursor-pointer">
+          <span id="volume-val" class="font-mono text-xs font-bold text-slate-900">0</span>
+        </div>
+        
         <div id="tempo" class="flex items-center gap-1">
           <label class="text-xs font-bold text-slate-800">TEMPO:</label>
           <input type="range" id="tempo-slider" min="60" max="180" value="124" class="w-24 accent-slate-800 cursor-pointer">

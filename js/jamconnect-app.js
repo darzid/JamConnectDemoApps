@@ -35,7 +35,9 @@ export class JamConnectApp {
     this.playBtn = document.getElementById('play-btn');
     this.stopBtn = document.getElementById('stop-btn');
     
-
+    this.volumeSlider = document.getElementById('volume-slider');
+    this.volumeVal = document.getElementById('volume-val');
+    
     this.tempoSlider = document.getElementById('tempo-slider');
     this.tempoVal = document.getElementById('tempo-val');
     
@@ -347,6 +349,11 @@ export class JamConnectApp {
   //// ------------------------
   //// COMMOM UI UPDATE METHODS
   //// ------------------------
+  updateVolume(volume) {
+    this.audioGraph.volume = volume / 100.0;
+    this.volumeVal.innerText = volume;
+  }
+  
   updateBpm(bpm) {
     if (bpm == Tone.Transport.bpm.value) return;
     this.tempoSlider.value = bpm;
@@ -538,6 +545,10 @@ export class JamConnectApp {
     this.resyncBtn.addEventListener('click', () => {
       this.jcClient.connector.resync();
       console.log("resync sent")
+    });
+
+    this.volumeSlider.addEventListener('change', (e) => {
+    	this.updateVolume(e.target.value);
     });
     
     this.tempoSlider.addEventListener('change', (e) => {
