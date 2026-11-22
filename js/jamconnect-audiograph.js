@@ -18,11 +18,16 @@ export class AudioGraphBase {
 		this.merge = new Tone.Merge();
 		this.groupBus.connect(this.merge, 0, 0);
 		this.groupBus.connect(this.merge, 1, 1);
+		this.masterLevel = new Tone.Gain();
+	  this.merge.connect(this.masterLevel);
 		
 		console.log("groupbus outputs", this.groupBus.numberOfOutputs);
 	}
 	
-	get output() { return this.merge; }
+	get volume() { return this.masterLevel.gain.value; }
+  set volume(value) { this.masterLevel.gain.value = value; }
+
+	get output() { return this.masterLevel; }
 	
 	connect(destination) {
 		this.output.connect(destination);
