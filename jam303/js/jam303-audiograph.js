@@ -5,8 +5,8 @@ const parameters = {
   	rate: {
     	value: "8n.",
       deviceParameter: "delayTime.value",
-      options: [    '16n.' , '16n',  '8n.',  '8n',  '4n.',  '4n',  '2n.',  '2n',  '1n'],
-			optionNames: ["1/16t", "1/16", "1/8t", "1/8", "1/4t", "1/4", "1/2t", "1/2", "1/1"],
+      options: [    '16n.' , '16n',  '8n.',  '8n',  '4n.',  '4n',  '2n',  '1n'],
+			optionNames: ["1/16.", "1/16", "1/8.", "1/8", "1/4.", "1/4", "1/2", "1/1"],
     },
     feedback: {
     	value: 0.3,
@@ -64,6 +64,7 @@ const parameters = {
   	tune: {
   		value: 0,
   		deviceParameter: "oscillator.detune.value",
+  		midiControlMapping: 94,
   		range: {
         min: -1200,
         max: 1200,
@@ -123,17 +124,6 @@ const parameters = {
         displayValueUnit: "%"
       }
     },
-/*    drive: {
-      value: 0.35,
-      deviceParameter: "drive",
-      midiControlMapping: 77,
-      range: {
-        min: 0,
-        max: 1,
-        displayValueMultiplier: 100,
-        displayValueUnit: "%"
-      }
-    },*/
     waveform: {
       value: "sawtooth",
       deviceParameter: "oscillator.type",
@@ -150,6 +140,15 @@ const parameters = {
       range: {
         min: 0,
         max: 4,
+      }
+    },
+    phase: {
+    	value: 0,
+      deviceParameter: "phase",
+      range: {
+        min: 0,
+        max: 360,
+        displayValueUnit: "deg"
       }
     },
 		rate: {
@@ -179,6 +178,15 @@ const parameters = {
       range: {
         min: 0,
         max: 1,
+      }
+    },
+    phase: {
+    	value: 0,
+      deviceParameter: "phase",
+      range: {
+        min: 0,
+        max: 360,
+        displayValueUnit: "deg"
       }
     },
 		rate: {
@@ -256,6 +264,8 @@ export class Jam303AudioGraph extends AudioGraphBase {
     	this.params.tb303.cutoff.range.min,
     	this.params.tb303.cutoff.range.max
   	);
+  	this.devices.modules.cutoffLfo.phase = this.params.cutoffLfo.phase.value;
+  	
   	this.devices.modules.cutoffLfo.connect(this.devices.modules.filter.frequency);
     this.devices.modules.cutoffLfo.start();
     
@@ -264,6 +274,8 @@ export class Jam303AudioGraph extends AudioGraphBase {
     	this.params.tb303.resonance.range.min,
     	this.params.tb303.resonance.range.max
   	);
+  	this.devices.modules.resonanceLfo.phase = this.params.resonanceLfo.phase.value;
+  	
   	this.devices.modules.resonanceLfo.connect(this.devices.instruments.tb303.filter.Q);
     this.devices.modules.resonanceLfo.start();
     

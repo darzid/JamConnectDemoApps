@@ -101,36 +101,41 @@
       <div class="tab-strip flex items-center gap-1 p-1"></div>
       
       <div class="tab-container">
-        <div title="SOUND" class="tab bg-slate-300/60 rounded-xl p-2 border border-slate-400/80 shadow-inner grid grid-cols-1 lg:grid-cols-12 gap-2 mb-2 items-center">
+        <div title="SOUND" class="tab bg-slate-300/30 rounded-xl p-2 border border-slate-400/80 shadow-inner grid grid-cols-1 lg:grid-cols-12 gap-2 mb-2 items-center">
           
-          <div id="tb303" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner mb-2">
+          <div id="tb303" class="device-knobs flex flex-col bg-slate-500/20 rounded-xl p-1.5 border border-slate-400/80 shadow-inner mb-2">
             <div class="device-knobs-title rounded-lg text-[12px] bg-stone-500/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">303</div>
             <div id="tb303-switches" class="items-center text-center"></div>
             <div id="tb303-knobs" class="lg:col-span-8 grid grid-cols-3 sm:grid-cols-6 gap-2 items-center text-center"></div>
           </div>
           
-          <div id="cutoffLfo" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
-            <div class="device-knobs-title rounded-lg text-[12px] bg-orange-500/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Cutoff LFO</div>
-            <div id="cutoffLfo-switches" class="items-center text-center"></div>
-            <div id="cutoffLfo-knobs" class="gap-2 items-center text-center"></div>
+          <div id="modulators" class="grid grid-cols-2 gap-2 mb-2">
+            <div id="cutoffLfo" class="device-knobs flex flex-col bg-slate-500/20 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+              <div class="device-knobs-title rounded-lg text-[12px] bg-orange-600/0 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Cutoff LFO</div>
+              <div id="cutoffLfo-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
+              <div id="cutoffLfo-switches" class="items-center text-center"></div>
+            </div>
+            
+            <div id="resonanceLfo" class="device-knobs flex flex-col bg-slate-500/20 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+              <div class="device-knobs-title rounded-lg text-[12px] bg-orange-600/40 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Resonance LFO</div>
+              <div id="resonanceLfo-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
+              <div id="resonanceLfo-switches" class="items-center text-center"></div>
+            </div>
           </div>
           
-          <div id="resonanceLfo" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
-            <div class="device-knobs-title rounded-lg text-[12px] bg-emerald-500/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Resonance LFO</div>
-            <div id="resonanceLfo-switches" class="items-center text-center"></div>
-            <div id="resonanceLfo-knobs" class="gap-2 items-center text-center"></div>
-          </div>
-          
-          <div id="delay" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
-            <div class="device-knobs-title rounded-lg text-[12px] bg-violet-500/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Delay</div>
-            <div id="delay-switches" class="items-center text-center"></div>
-            <div id="delay-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
-          </div>
-          
-          <div id="distortion" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
-            <div class="device-knobs-title rounded-lg text-[12px] bg-fuchsia-500/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Distortion</div>
-            <div id="distortion-switches" class="items-center text-center"></div>
-            <div id="distortion-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
+          <div id="effects" class="grid grid-cols-2 gap-2">
+            <div id="delay" class="device-knobs flex flex-col bg-slate-500/20 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+              <div class="device-knobs-title rounded-lg text-[12px] bg-violet-600/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Delay</div>
+              <div id="delay-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
+              <div id="delay-switches" class="items-center text-center"></div>
+            </div>
+            
+            <div id="distortion" class="device-knobs flex flex-col bg-slate-500/20 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+              <div class="device-knobs-title rounded-lg text-[12px] bg-violet-600/60 font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Distortion</div>
+              <div id="distortion-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
+              <div id="distortion-switches" class="items-center text-center"></div>
+
+            </div>
           </div>
           
           <div id="sound-hints" class="mt-4 flex flex-wrap justify-between items-center text-[11px] text-slate-600 font-semibold gap-2 text-center">Drag knobs vertically to adjust parameter (synced live in Jam Sessions)</div>
