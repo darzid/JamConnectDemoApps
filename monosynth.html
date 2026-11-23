@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.22/Tone.js"></script>
+</head>
+
+<body>
+	<button id="playNote">Play note</button>
+	<br>
+	<label>Decay:<input type="range" id="decay" min="0.1" max="1" step="0.05"></label>
+	<label>FilterEnvelope.baseFrequency:<input type="range" id="baseFreq" min="100" max="500"></label>
+	<script>
+		const synth = new Tone.MonoSynth({
+      oscillator: {
+        type: "sawtooth"
+      },
+      envelope: {
+        attack: 0.003,
+        decay: 0.2,
+        sustain: 0,
+        release: 0.05
+      },
+      filter: {
+        Q: 1,
+        type: 'lowpass',
+        rolloff: -24
+      },
+  /*    filterEnvelope: {
+        attack: 0.003,
+        decay: 0.0,
+        sustain: 0.0,
+        release: 0.0,
+       //baseFrequency: 400,
+       // octaves: 0.6 * 5,
+      //  exponent: 2
+      },*/
+    	filterEnvelope: {
+        attack: 0.003,
+        decay: 0.3,
+        sustain: 0.0,
+        release: 0.1,
+        baseFrequency: 400,
+        octaves: 0.6 * 5,
+        exponent: 2
+      }
+    });
+    
+    synth.toDestination();
+    
+    const lfo = new Tone.LFO("1m", 50, 500);
+    const meter = new Tone.Meter({normalRange: true});
+    lfo.connect(meter);
+    lfo.start();
+    
+    let slider = document.getElementById("baseFreq");
+    let value = document.getElementById("baseFreq2");
+    function updateNonSignalParam() {
+		  const lfoValue = meter.getValue(); // Current audio-rate value as a JS number
+		  slider.value = lfoValue;
+			//console.log(lfoValue)
+		  const modulatedCutoff = Math.max(20, lfoValue);
+		
+		  // Assign to your non-signal property
+		  synth.filterEnvelope.baseFrequency = Math.max(100, lfoValue);
+			
+		  requestAnimationFrame(updateNonSignalParam);
+		}
+
+		updateNonSignalParam();
+		
+    const loop = new Tone.Loop((time) => {
+    	try {
+    	synth.triggerAttackRelease("C2", "16n", time)
+    	//synth.triggerAttackRelease("C3", "16n", time + "8n")
+    	}
+    	catch (err) {
+    		console.error("error", err, err.stack)
+    	}
+		}, "8n");
+		var playing = false;
+		loop.start();
+    
+    document.getElementById("playNote").addEventListener("click", async () => {
+    	//synth.triggerAttackRelease("C2", "16n", time)
+    	
+    	if (! playing) {
+    		await Tone.start()
+    		
+    		Tone.Transport.start()
+    		playing = true;
+    	}
+    	else {
+    		Tone.Transport.stop();
+    		playing = false;
+    	}
+    });
+    
+    document.getElementById("decay").addEventListener("input", (e) => 
+    	synth.envelope.decay = e.target.value
+    );
+    
+    slider.addEventListener("input", (e) => 
+    	synth.filterEnvelope.baseFrequency = e.target.value
+    );
+    
+    
+		
+		
+   // let freq = new Tone.Frequency("C#3").toMidi();
+    //alert(freq)
+	</script>
+</body>
+
+</html>
