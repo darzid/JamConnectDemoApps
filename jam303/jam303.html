@@ -94,10 +94,10 @@
           <span id="swing-val" class="font-mono text-xs font-bold text-slate-900">0%</span>
         </div>
         
-        <div id="delay" class="flex items-center gap-1">
+     <!--   <div id="delay" class="flex items-center gap-1">
           <label class="text-xs font-bold text-slate-800">DELAY:</label>
           <input type="checkbox" id="delay.enabled" checked class="w-4 h-4 accent-emerald-600 rounded cursor-pointer">
-        </div>
+        </div>-->
       </div>
     </div>
     
@@ -107,14 +107,26 @@
       <div class="tab-container">
         <div title="SOUND" class="tab bg-slate-300/60 rounded-xl p-2 border border-slate-400/80 shadow-inner grid grid-cols-1 lg:grid-cols-12 gap-2 mb-2 items-center">
           
-          <div id="tb303-waveform" class="items-center gap-1 p-1 text-center">
-            <button id="wave-saw" data-parameter="tb303.waveform" data-value="sawtooth" class="px-2 py-1 text-xs font-bold rounded synth-btn active-led text-slate-900">SAWTOOTH</button>
-            <button id="wave-sqr" data-parameter="tb303.waveform" data-value="square" class="px-2 py-1 text-xs font-bold rounded synth-btn text-slate-700">SQUARE</button>
+          <div id="tb303" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner mb-2">
+            <div class="device-knobs-title rounded-lg text-[12px] font-extrabold uppercase mb-1 text-amber-400 items-center text-center">303</div>
+            <div id="tb303-switches" class="items-center text-center"></div>
+            <div id="tb303-knobs" class="lg:col-span-8 grid grid-cols-3 sm:grid-cols-6 gap-2 items-center text-center"></div>
           </div>
-          
-          <div id="rotary-knobs" class="lg:col-span-8 grid grid-cols-3 sm:grid-cols-6 gap-2 items-center text-center">
+          <div id="cutoffLfo" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+            <div class="device-knobs-title rounded-lg text-[12px] font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Cutoff LFO</div>
+            <div id="cutoffLfo-switches" class="items-center text-center"></div>
+            <div id="cutoffLfo-knobs" class="gap-2 items-center text-center"></div>
           </div>
-          
+          <div id="resonanceLfo" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+            <div class="device-knobs-title rounded-lg text-[12px] font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Resonance LFO</div>
+            <div id="resonanceLfo-switches" class="items-center text-center"></div>
+            <div id="resonanceLfo-knobs" class="gap-2 items-center text-center"></div>
+          </div>
+          <div id="delay" class="device-knobs flex flex-col bg-slate-300/60 rounded-xl p-1.5 border border-slate-400/80 shadow-inner">
+            <div class="device-knobs-title rounded-lg text-[12px] font-extrabold uppercase mb-1 text-amber-400 items-center text-center">Delay</div>
+            <div id="delay-switches" class="items-center text-center"></div>
+            <div id="delay-knobs" class="gap-2 grid grid-cols-2 items-center text-center"></div>
+          </div>
           <div id="sound-hints" class="mt-4 flex flex-wrap justify-between items-center text-[11px] text-slate-600 font-semibold gap-2 text-center">Drag knobs vertically to adjust parameter (synced live in Jam Sessions)</div>
         </div>
 

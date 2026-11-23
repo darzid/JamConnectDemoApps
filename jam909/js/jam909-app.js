@@ -5,7 +5,7 @@ import { JamConnectApp } from "../../js/jamconnect-app.js";
 console.log("test2")
 export class Jam909App extends JamConnectApp {
   constructor() {
-    super("jam909", new Jam909AudioGraph(), "#de9e09", "#100B09", "amber");
+    super("jam909", new Jam909AudioGraph(), { visualizerStrokeColor: "#de9e09", visualizerBackgroundColor: "#100B09", themeColorName: "amber" });
     console.log("test")
     super.registerServiceWorker("/jam909/jam909-service-worker.js", "/jam909/");
     this.renderDebounceTimers = {};

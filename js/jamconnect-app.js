@@ -14,18 +14,15 @@ export class JamConnectApp {
   	toggles: {}
   }
   
-  constructor(appName, audioGraph, visualizerStrokeColor = "#22c55e", visualizerBackgroundColor = "#091209", themeColorName = "emerald", enableLogging = false) {
+  constructor(appName, audioGraph, options = {}) {
     this.appName = appName;
     this.audioGraph = audioGraph;
     this.audioGraph.onAudioInitialized = () => this.onAudioInitialized();
-    
-    console.log(Tone.Master)
+
     this.audioGraph.toDestination();
-    //Tone.Master, 0, 0);
-    console.log("connected")
     this._sequencer = null;
     
-    this.themeColorName = themeColorName;
+    this.themeColorName = options.themeColorName || "emerald";
     this.displayTempo = document.getElementById('display-tempo');
     this.playLed = document.getElementById('play-led');
     
@@ -55,10 +52,10 @@ export class JamConnectApp {
     this.tabControl = new TabControl();
     
     this.activeMidiInput = null;
-    this.visualizer = new Visualizer(this.audioGraph.output, "visualizer-canvas", { strokeColor: visualizerStrokeColor, bgColor: visualizerBackgroundColor});
+    this.visualizer = new Visualizer(this.audioGraph.output, "visualizer-canvas", { strokeColor: options.visualizerStrokeColor || "#22c55e", bgColor: options.visualizerBackgroundColor || "#091209"});
     this.vuMeter = new LevelMeter(this.audioGraph, "levelmeter-canvas");
     
-    this.jcClient = new JamConnectClient(appName, document.getElementById("jamconnect"), true);
+    this.jcClient = new JamConnectClient(appName, document.getElementById("jamconnect"), options.enableLogging || false);
     this.jcClient.connector.getFullStateSnapshot = () => this.getFullStateJamConnectSnapshot();
     this.jcClient.connector.applyFullStateSnapshot = (appName, snapshot) => this.applyFullStateJamConnectSnapshot(appName, snapshot);
     this.jcClient.connector.onMasterSettingUpdated = (appName, setting, value) => this.applyJamConnectMasterSettingUpdate(appName, setting, value);
@@ -187,7 +184,7 @@ export class JamConnectApp {
   
   onParameterChangeRequest(deviceName, parameterName, parameterValue) {
   	let parameterId = `${deviceName}.${parameterName}`;
-  	console.log("onParameterChangeRequest " + parameterId)
+  	//console.log("onParameterChangeRequest " + parameterId)
   	if (this.parameterControls.knobs[parameterId])
   		this.parameterControls.knobs[parameterId].value = parameterValue;
   	else if (this.parameterControls.switches[parameterId])
@@ -278,7 +275,7 @@ export class JamConnectApp {
   }
   
   applyDeviceParameterChange(appName, parameterId, value) {
-    console.log("applyDeviceParameterChange " + parameterId, value);
+    //console.log("applyDeviceParameterChange " + parameterId, value);
     if (this.parameterControls.knobs[parameterId] && typeof value === 'number') {
       this.parameterControls.knobs[parameterId].value = value;
     } else if (this.parameterControls.switches[parameterId]) {
@@ -289,7 +286,7 @@ export class JamConnectApp {
   }
   
   applyTransportUpdatesFromJamConnectSnapshot(appName, snapshotBpm, snapshotSwingPct) {
-    console.log("applyTransportUpdatesFromJamConnectSnapshot")
+    //console.log("applyTransportUpdatesFromJamConnectSnapshot")
     if (typeof snapshotBpm === 'number')
       this.updateBpm(snapshotBpm);
     if (typeof snapshotSwingPct === 'number')
@@ -297,14 +294,14 @@ export class JamConnectApp {
   }
   
   applyJamConnectPatternUpdate(appName, instrumentName, pattern, presetName) {
-    console.log("applyJamConnectPatternUpdate " + instrumentName, pattern, presetName);
+    //console.log("applyJamConnectPatternUpdate " + instrumentName, pattern, presetName);
     this.sequencer.instrumentPatterns[instrumentName] = JSON.parse(JSON.stringify(pattern));
     if (this.sequencer.selectedInstrumentName == instrumentName)
       this.sequencer.refresh(); 
   }
   
   applyJamConnectPatternStepUpdate(appName, instrumentName, stepIndex, stepData) {
-    console.log("applyJamConnectPatternStepUpdate " + instrumentName, stepIndex, stepData);
+    //console.log("applyJamConnectPatternStepUpdate " + instrumentName, stepIndex, stepData);
     this.sequencer.instrumentPatterns[instrumentName][stepIndex] = stepData;
     if (this.sequencer.selectedInstrumentName == instrumentName)
       this.sequencer.refresh(); 
@@ -315,7 +312,7 @@ export class JamConnectApp {
   applyAppSpecificDataUpdatesFromJamConnectSnapshot(appName, snapshot) {}
   
   applyJamConnectMasterSettingUpdate(appName, setting, value) {
-    console.log("applyJamConnectMasterSettingUpdate")
+    //console.log("applyJamConnectMasterSettingUpdate")
     this.jcClient.isApplyingRemoteUpdate = true;
     try {
       if (setting === 'swing') {
@@ -335,7 +332,7 @@ export class JamConnectApp {
   applyAppSpecificJamConnectMasterSettingUpdate(appName, setting, value) {}
   
   applyJamConnectDeviceParameterChange(appName, parameterId, value, normalizedValue) {
-    console.log("applyJamConnectDeviceParameterChange")
+    //console.log("applyJamConnectDeviceParameterChange")
     this.jcClient.isApplyingRemoteUpdate = true;
     try {
       const targetVal = typeof normalizedValue === 'number' ? normalizedValue : value;
@@ -398,7 +395,7 @@ export class JamConnectApp {
       //console.log("onStateChanged: state unchanged", state, this.prevState);
       return;
     }
-    console.log("onStateChanged", JSON.stringify(state));
+    //console.log("onStateChanged", JSON.stringify(state));
     this.prevState = state;
     
     this.inviteBtn.disabled = !state.canInvite || state.isInviting;

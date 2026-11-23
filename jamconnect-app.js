@@ -1,5 +1,6 @@
 export class App {
   constructor() {
+  	
     let swRegistration = null;
     if (location.origin !== "file://") {
       if ("serviceWorker" in navigator) {

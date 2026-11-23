@@ -2,12 +2,34 @@ import { AudioGraphBase } from "../../js/jamconnect-audiograph.js";
 
 const parameters = {
   delay: {
-    enabled: {
-      value: true,
-      deviceParameter: "enabled",
-      boolean: true
-    }
+  	rate: {
+    	value: "8n.",
+      deviceParameter: "delayTime.value",
+      options: [    '16n.' , '16n',  '8n.',  '8n',  '4n.',  '4n',  '2n.',  '2n',  '1n'],
+			optionNames: ["1/16t", "1/16", "1/8t", "1/8", "1/4t", "1/4", "1/2t", "1/2", "1/1"],
+    },
+    feedback: {
+    	value: 0.3,
+      deviceParameter: "feedback.value",
+      range: {
+      	min: 0,
+        max: 1,
+        displayValueMultiplier: 100,
+        displayValueUnit: "%"
+      }
+    },
+    amount: {
+    	value: 0.25,
+      deviceParameter: "wet.value",
+      range: {
+      	min: 0,
+        max: 1,
+        displayValueMultiplier: 100,
+        displayValueUnit: "%"
+      }
+    },
   },
+  
   tb303: {
     cutoff: {
       value: 400,
@@ -19,6 +41,7 @@ const parameters = {
         displayValueUnit: "Hz"
       }
     },
+    
     resonance: {
       value: 7,
       deviceParameter: "filter.Q.value",
@@ -77,7 +100,67 @@ const parameters = {
       deviceParameter: "oscillator.type",
       midiControlMapping: 83,
       options: ["sawtooth","square"],
+      optionNames: ["sawtooth", "square"]
     }
+  },
+  
+  cutoffLfo: {
+		amount: {
+    	value: 0,
+      deviceParameter: "amplitude.value",
+      range: {
+        min: 0,
+        max: 4,
+      }
+    },
+		rate: {
+    	value: "4n",
+      deviceParameter: "frequency.value",
+      options: [
+      	"4n",  
+      	"2n",  
+      	"0:1:0",  
+      	"0:2:0", 
+      	"0:3:0", 
+      	"1:0:0"],
+			optionNames: [
+				"1/4", 
+				"1/2", 
+				"1/1", 
+				"2/1", 
+				"3/1", 
+				"4/1"],
+    },
+  },
+  
+  resonanceLfo: {
+		amount: {
+    	value: 0,
+      deviceParameter: "amplitude.value",
+      range: {
+        min: 0,
+        max: 1,
+      }
+    },
+		rate: {
+    	value: "4n",
+      deviceParameter: "frequency.value",
+      options: [
+      	"4n", 
+      	"2n", 
+      	"0:1:0", 
+      	"0:2:0", 
+      	"0:3:0", 
+      	"1:0:0"
+      ],
+			optionNames: [
+				"1/4", 
+				"1/2", 
+				"1/1", 
+				"2/1", 
+				"3/1", 
+				"4/1"],
+    },
   }
 }
 
@@ -88,9 +171,9 @@ export class Jam303AudioGraph extends AudioGraphBase {
   
     // Ping Pong Delay Unit
     this.devices.effects.delay = new Tone.PingPongDelay({
-      delayTime: "8n.",
-      feedback: 0.3,
-      wet: 0.25
+      delayTime: this.params.delay.rate.value,
+      feedback: this.params.delay.feedback.value,
+      wet: this.params.delay.amount.value,
     });
     Object.defineProperty(this.devices.effects.delay, "enabled", {
       get:()=>{ return this.devices.effects.delay.wet.value != 0; },
@@ -102,8 +185,6 @@ export class Jam303AudioGraph extends AudioGraphBase {
       distortion: this.params.tb303.drive.value,
       wet: 0.6
     });
-    
-    
     
     this.devices.instruments.tb303 = new Tone.MonoSynth({
       oscillator: {
@@ -131,6 +212,24 @@ export class Jam303AudioGraph extends AudioGraphBase {
       }
     });
     this.devices.instruments.tb303._accent = this.params.tb303.accent.value;
+    
+  	this.devices.modules.filter = new Tone.Filter();
+
+		this.devices.modules.cutoffLfo = new Tone.LFO(
+    	this.params.cutoffLfo.rate.value, 
+    	this.params.tb303.cutoff.range.min,
+    	this.params.tb303.cutoff.range.max
+  	);
+  	this.devices.modules.cutoffLfo.connect(this.devices.modules.filter.frequency);
+    this.devices.modules.cutoffLfo.start();
+    
+    this.devices.modules.resonanceLfo = new Tone.LFO(
+    	this.params.resonanceLfo.rate.value, 
+    	this.params.tb303.resonance.range.min,
+    	this.params.tb303.resonance.range.max
+  	);
+  	this.devices.modules.resonanceLfo.connect(this.devices.instruments.tb303.filter.Q);
+    this.devices.modules.resonanceLfo.start();
     
     Object.defineProperty(this.devices.instruments.tb303, "decay", {
       get:()=>{return this.devices.instruments.tb303.envelope.decay; },
@@ -163,7 +262,7 @@ export class Jam303AudioGraph extends AudioGraphBase {
     
 
     // Chain 303 Audio Routing
-    this.devices.instruments.tb303.chain(this.devices.effects.distortion, this.devices.effects.delay, this.groupBus);
+    this.devices.instruments.tb303.chain(this.devices.modules.filter, this.devices.effects.distortion, this.devices.effects.delay, this.groupBus);
   }
   
   play303StepNote(noteFreq, accent, slide, duration, time) 
