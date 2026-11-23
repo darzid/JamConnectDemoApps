@@ -30,7 +30,46 @@ const parameters = {
     },
   },
   
+  distortion: {
+  	oversample: {
+    	value: "none",
+      deviceParameter: "oversample",
+      options: ["none", "2x", "4x"],
+			optionNames: ["none", "2x", "4x"],
+    },
+  	drive: {
+  		value: 0.35,
+      deviceParameter: "distortion",
+      midiControlMapping: 77,
+      range: {
+        min: 0,
+        max: 1,
+        displayValueMultiplier: 100,
+        displayValueUnit: "%"
+      }
+  	},
+  	dryWet: {
+  		value: 0.6,
+      deviceParameter: "wet.value",
+      range: {
+      	min: 0,
+        max: 1,
+        displayValueMultiplier: 100,
+        displayValueUnit: "%"
+      }
+  	}
+  },
+  
   tb303: {
+  	tune: {
+  		value: 0,
+  		deviceParameter: "oscillator.detune.value",
+  		range: {
+        min: -1200,
+        max: 1200,
+        displayValueUnit: "ct"
+      }
+  	},
     cutoff: {
       value: 400,
       deviceParameter: "filterEnvelope.baseFrequency",
@@ -84,7 +123,7 @@ const parameters = {
         displayValueUnit: "%"
       }
     },
-    drive: {
+/*    drive: {
       value: 0.35,
       deviceParameter: "drive",
       midiControlMapping: 77,
@@ -94,7 +133,7 @@ const parameters = {
         displayValueMultiplier: 100,
         displayValueUnit: "%"
       }
-    },
+    },*/
     waveform: {
       value: "sawtooth",
       deviceParameter: "oscillator.type",
@@ -114,7 +153,7 @@ const parameters = {
       }
     },
 		rate: {
-    	value: "4n",
+    	value: "0:1:0",
       deviceParameter: "frequency.value",
       options: [
       	"4n",  
@@ -143,7 +182,7 @@ const parameters = {
       }
     },
 		rate: {
-    	value: "4n",
+    	value: "0:1:0",
       deviceParameter: "frequency.value",
       options: [
       	"4n", 
@@ -175,15 +214,12 @@ export class Jam303AudioGraph extends AudioGraphBase {
       feedback: this.params.delay.feedback.value,
       wet: this.params.delay.amount.value,
     });
-    Object.defineProperty(this.devices.effects.delay, "enabled", {
-      get:()=>{ return this.devices.effects.delay.wet.value != 0; },
-      set:(value)=>{ this.devices.effects.delay.wet.value = (value == true) ? 0.25 : 0; }
-    });
     
     // Saturation / Distortion Unit
     this.devices.effects.distortion = new Tone.Distortion({
-      distortion: this.params.tb303.drive.value,
-      wet: 0.6
+      oversample: this.params.distortion.oversample.value,
+      distortion: this.params.distortion.drive.value,
+      wet: this.params.distortion.dryWet.value,
     });
     
     this.devices.instruments.tb303 = new Tone.MonoSynth({

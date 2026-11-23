@@ -348,7 +348,7 @@ export class JamConnectApp {
   //// ------------------------
   updateVolume(volume) {
     this.audioGraph.volume = volume / 100.0;
-    this.volumeVal.innerText = volume;
+    this.volumeVal.textContent = volume;
   }
   
   updateBpm(bpm) {
@@ -544,7 +544,7 @@ export class JamConnectApp {
       console.log("resync sent")
     });
 
-    this.volumeSlider.addEventListener('change', (e) => {
+    this.volumeSlider.addEventListener('input', (e) => {
     	this.updateVolume(e.target.value);
     });
     
