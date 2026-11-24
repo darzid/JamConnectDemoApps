@@ -34,43 +34,43 @@ export class FillsModule {
   // ---------------------------------------------------------------------------
 
   syncFillFilterUI() {
-    const st = this.app.state;
+    const state = this.app.state;
     const btn = document.getElementById('btn-fill-filter');
     const led = document.getElementById('fill-filter-led');
     if (btn && led) {
-      btn.classList.toggle('hw-btn-amber', st.fillFilterOn);
-      btn.childNodes[btn.childNodes.length - 1].textContent = st.fillFilterOn ? ' ACTIVE' : ' BYPASS';
-      led.className = st.fillFilterOn ? 'led on-amber' : 'led';
+      btn.classList.toggle('hw-btn-amber', state.fillFilterOn);
+      btn.childNodes[btn.childNodes.length - 1].textContent = state.fillFilterOn ? ' ACTIVE' : ' BYPASS';
+      led.className = state.fillFilterOn ? 'led on-amber' : 'led';
     }
     document.querySelectorAll('.ffmode-btn').forEach((b) => {
-      const active = b.dataset.ffmode === st.fillFilterMode;
+      const active = b.dataset.ffmode === state.fillFilterMode;
       b.className = active
         ? 'ffmode-btn px-2 py-0.5 rounded font-mono-tech text-[10px] bg-amber-500 text-zinc-950 font-bold cursor-pointer'
         : 'ffmode-btn px-2 py-0.5 rounded font-mono-tech text-[10px] bg-zinc-800 text-zinc-400 cursor-pointer';
     });
     const cutVal = document.getElementById('fill-filter-cutoff-val');
-    if (cutVal) cutVal.textContent = formatHz(st.fillFilterCutoff);
+    if (cutVal) cutVal.textContent = formatHz(state.fillFilterCutoff);
     const qVal = document.getElementById('fill-filter-q-val');
-    if (qVal) qVal.textContent = st.fillFilterQ.toFixed(1);
+    if (qVal) qVal.textContent = state.fillFilterQ.toFixed(1);
   }
 
   updateFillFilterAutoUI(progress) {
-    const st = this.app.state;
-    const p = Math.max(0, Math.min(1, progress));
-    const stepsDone = st.fillFilterAutoOn ? Math.min(8, Math.floor(p * 8) + 1) : 0;
+    const state = this.app.state;
+    const currentProgress = Math.max(0, Math.min(1, progress));
+    const stepsDone = state.fillFilterAutoOn ? Math.min(8, Math.floor(currentProgress * 8) + 1) : 0;
 
     const indicator = document.getElementById('fill-filter-auto-indicator');
     const stepVal = document.getElementById('fill-filter-step-val');
     const autoBtn = document.getElementById('btn-fill-filter-auto');
     const autoLed = document.getElementById('fill-filter-auto-led');
 
-    if (indicator) indicator.classList.toggle('hidden', !st.fillFilterAutoOn);
+    if (indicator) indicator.classList.toggle('hidden', !state.fillFilterAutoOn);
     if (stepVal) stepVal.textContent = `${stepsDone} / 8 STEPS`;
     if (autoBtn) {
-      autoBtn.classList.toggle('hw-btn-amber', st.fillFilterAutoOn);
-      autoBtn.classList.toggle('text-amber-300', !st.fillFilterAutoOn);
+      autoBtn.classList.toggle('hw-btn-amber', state.fillFilterAutoOn);
+      autoBtn.classList.toggle('text-amber-300', !state.fillFilterAutoOn);
     }
-    if (autoLed) autoLed.className = st.fillFilterAutoOn ? 'led on-red' : 'led';
+    if (autoLed) autoLed.className = state.fillFilterAutoOn ? 'led on-red' : 'led';
 
     document.querySelectorAll('.fill-filter-step-led').forEach((el, idx) => {
       el.className = idx < stepsDone ? 'led fill-filter-step-led on-amber' : 'led fill-filter-step-led';
@@ -78,18 +78,18 @@ export class FillsModule {
   }
 
   stopFillFilterAuto(restoreStart = true) {
-    const st = this.app.state;
-    st.fillFilterAutoOn = false;
-    st.fillFilterAutoProgress = 0;
+    const state = this.app.state;
+    state.fillFilterAutoOn = false;
+    state.fillFilterAutoProgress = 0;
     if (this.fillFilterAutoRafId) {
       cancelAnimationFrame(this.fillFilterAutoRafId);
       this.fillFilterAutoRafId = 0;
     }
     if (restoreStart) {
       const slider = document.getElementById('fill-filter-cutoff');
-      if (slider) slider.value = Math.round(st.fillFilterAutoStartSlider);
-      st.fillFilterCutoff = sliderToLogFreq(st.fillFilterAutoStartSlider);
-      st.fillFilterOn = false;
+      if (slider) slider.value = Math.round(state.fillFilterAutoStartSlider);
+      state.fillFilterCutoff = sliderToLogFreq(state.fillFilterAutoStartSlider);
+      state.fillFilterOn = false;
       this.syncFillFilterUI();
       this.audio.applyFillFilter();
     }
@@ -97,25 +97,25 @@ export class FillsModule {
   }
 
   _stepFillFilterAuto(ts) {
-    const st = this.app.state;
-    if (!st.fillFilterAutoOn) return;
+    const state = this.app.state;
+    if (!state.fillFilterAutoOn) return;
     const dtSec = Math.max(0, (ts - this.fillFilterAutoLastTs) / 1000);
     this.fillFilterAutoLastTs = ts;
 
-    const eightStepsSec = 8 * (60 / Math.max(70, st.bpm));
-    st.fillFilterAutoProgress = Math.min(1, st.fillFilterAutoProgress + dtSec / eightStepsSec);
+    const eightStepsSec = 8 * (60 / Math.max(70, state.bpm));
+    state.fillFilterAutoProgress = Math.min(1, state.fillFilterAutoProgress + dtSec / eightStepsSec);
 
-    const startVal = st.fillFilterAutoStartSlider;
-    const curSliderVal = startVal + (1000 - startVal) * st.fillFilterAutoProgress;
+    const startVal = state.fillFilterAutoStartSlider;
+    const curSliderVal = startVal + (1000 - startVal) * state.fillFilterAutoProgress;
     const slider = document.getElementById('fill-filter-cutoff');
     if (slider) slider.value = Math.round(curSliderVal);
 
-    st.fillFilterCutoff = sliderToLogFreq(curSliderVal);
+    state.fillFilterCutoff = sliderToLogFreq(curSliderVal);
     this.syncFillFilterUI();
     this.audio.applyFillFilter();
-    this.updateFillFilterAutoUI(st.fillFilterAutoProgress);
+    this.updateFillFilterAutoUI(state.fillFilterAutoProgress);
 
-    if (st.fillFilterAutoProgress >= 1) {
+    if (state.fillFilterAutoProgress >= 1) {
       this.stopFillFilterAuto(true);
       this.app.showToast('Auto Filter 8-step sweep complete!', 'on-mint');
       return;
@@ -125,8 +125,8 @@ export class FillsModule {
   }
 
   async toggleFillFilterAuto() {
-    const st = this.app.state;
-    if (st.fillFilterAutoOn) {
+    const state = this.app.state;
+    if (state.fillFilterAutoOn) {
       this.stopFillFilterAuto(true);
       this.app.showToast('Auto Filter disabled', 'on-amber');
       return;
@@ -134,10 +134,10 @@ export class FillsModule {
 
     await this.audio.ensureReady();
     const slider = document.getElementById('fill-filter-cutoff');
-    st.fillFilterAutoStartSlider = slider ? Number(slider.value) : 670;
-    st.fillFilterOn = true;
-    st.fillFilterAutoOn = true;
-    st.fillFilterAutoProgress = 0;
+    state.fillFilterAutoStartSlider = slider ? Number(slider.value) : 670;
+    state.fillFilterOn = true;
+    state.fillFilterAutoOn = true;
+    state.fillFilterAutoProgress = 0;
     this.fillFilterAutoLastTs = performance.now();
 
     this.syncFillFilterUI();
@@ -152,18 +152,18 @@ export class FillsModule {
   // ---------------------------------------------------------------------------
 
   syncAllRollUI() {
-    const st = this.app.state;
-    const active = st.allRollHold || st.allRollLatch;
+    const state = this.app.state;
+    const active = state.allRollHold || state.allRollLatch;
     const holdBtn = document.getElementById('btn-all-roll-hold');
     const holdLed = document.getElementById('all-roll-hold-led');
     const latchBtn = document.getElementById('btn-all-roll-latch');
     const latchLed = document.getElementById('all-roll-latch-led');
     const status = document.getElementById('all-roll-status');
 
-    if (holdBtn) holdBtn.classList.toggle('pressed', st.allRollHold);
-    if (holdLed) holdLed.className = st.allRollHold ? 'led on-cyan' : 'led';
-    if (latchBtn) latchBtn.classList.toggle('hw-btn-amber', st.allRollLatch);
-    if (latchLed) latchLed.className = st.allRollLatch ? 'led on-amber' : 'led';
+    if (holdBtn) holdBtn.classList.toggle('pressed', state.allRollHold);
+    if (holdLed) holdLed.className = state.allRollHold ? 'led on-cyan' : 'led';
+    if (latchBtn) latchBtn.classList.toggle('hw-btn-amber', state.allRollLatch);
+    if (latchLed) latchLed.className = state.allRollLatch ? 'led on-amber' : 'led';
     if (status) {
       status.textContent = active ? 'ROLLING' : 'IDLE';
       status.className = active
@@ -171,7 +171,7 @@ export class FillsModule {
         : 'font-mono-tech text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400';
     }
     document.querySelectorAll('.roll-rate-btn').forEach((b) => {
-      b.classList.toggle('hw-btn-amber', Number(b.dataset.roll) === st.allRollRate);
+      b.classList.toggle('hw-btn-amber', Number(b.dataset.roll) === state.allRollRate);
     });
   }
 
@@ -187,11 +187,11 @@ export class FillsModule {
   // ---------------------------------------------------------------------------
 
   updateFillReverbUI(progress) {
-    const st = this.app.state;
-    const p = Math.max(0, Math.min(1, progress));
-    const beatsDone = st.fillVerbRunning ? Math.min(8, Math.floor(p * 8) + 1) : 0;
-    const roomSec = (0.45 + p * 6.05).toFixed(1);
-
+    const state = this.app.state;
+    const currentProgress = Math.max(0, Math.min(1, progress));
+    const beatsDone = state.fillVerbRunning ? Math.min(8, Math.floor(currentProgress * 8) + 1) : 0;
+    const roomSec = (0.45 + currentProgress * 6.05).toFixed(1);
+    
     const roomEl = document.getElementById('fill-verb-room-val');
     const beatEl = document.getElementById('fill-verb-beat-val');
     const ledEl = document.getElementById('fill-verb-led');
@@ -199,10 +199,10 @@ export class FillsModule {
 
     if (roomEl) roomEl.textContent = `${roomSec}s ROOM`;
     if (beatEl) beatEl.textContent = `${beatsDone} / 8 BEATS`;
-    if (ledEl) ledEl.className = st.fillVerbRunning ? 'led on-red' : 'led';
+    if (ledEl) ledEl.className = state.fillVerbRunning ? 'led on-red' : 'led';
     if (startBtn) {
-      startBtn.classList.toggle('hw-btn-red', st.fillVerbRunning);
-      startBtn.classList.toggle('hw-btn-amber', !st.fillVerbRunning);
+      startBtn.classList.toggle('hw-btn-red', state.fillVerbRunning);
+      startBtn.classList.toggle('hw-btn-amber', !state.fillVerbRunning);
     }
 
     document.querySelectorAll('.fill-beat-led').forEach((el, idx) => {
@@ -211,9 +211,9 @@ export class FillsModule {
   }
 
   resetFillReverb(silent = false) {
-    const st = this.app.state;
-    st.fillVerbRunning = false;
-    st.fillVerbProgress = 0;
+    const state = this.app.state;
+    state.fillVerbRunning = false;
+    state.fillVerbProgress = 0;
     if (this.fillVerbRafId) {
       cancelAnimationFrame(this.fillVerbRafId);
       this.fillVerbRafId = 0;
@@ -224,18 +224,21 @@ export class FillsModule {
   }
 
   _stepFillReverbBuild(ts) {
-    const st = this.app.state;
-    if (!st.fillVerbRunning) return;
+    const state = this.app.state;
+    if (!state.fillVerbRunning) return;
     const dtSec = Math.max(0, (ts - this.fillVerbLastTs) / 1000);
     this.fillVerbLastTs = ts;
 
-    const eightBeatsSec = 8 * (60 / Math.max(70, st.bpm));
-    st.fillVerbProgress = Math.min(1, st.fillVerbProgress + dtSec / eightBeatsSec);
+    const eightBeatsSec = 8 * (60 / Math.max(70, state.bpm));
+    state.fillVerbProgress = Math.min(1, state.fillVerbProgress + dtSec / eightBeatsSec);
 
-    this.audio.applyFillReverbProgress(st.fillVerbProgress);
-    this.updateFillReverbUI(st.fillVerbProgress);
+    const currentProgress = Math.max(0, Math.min(1, state.fillVerbProgress));
+    const beatsDone = state.fillVerbRunning ? Math.min(8, Math.floor(currentProgress * 8) + 1) : 0;
+    
+    this.audio.applyFillReverbProgress(state.fillVerbProgress, beatsDone);
+    this.updateFillReverbUI(state.fillVerbProgress);
 
-    if (st.fillVerbProgress >= 1) {
+    if (state.fillVerbProgress >= 1) {
       this.resetFillReverb(true);
       this.app.showToast('8-Beat Reverb Build complete!', 'on-mint');
       return;
@@ -245,13 +248,13 @@ export class FillsModule {
   }
 
   async startFillReverbBuild() {
-    const st = this.app.state;
+    const state = this.app.state;
     await this.audio.ensureReady();
     if (this.fillVerbRafId) cancelAnimationFrame(this.fillVerbRafId);
-    st.fillVerbRunning = true;
-    st.fillVerbProgress = 0;
+    state.fillVerbRunning = true;
+    state.fillVerbProgress = 0;
     this.fillVerbLastTs = performance.now();
-    this.audio.applyFillReverbProgress(0);
+    this.audio.applyFillReverbProgress(0, 0);
     this.updateFillReverbUI(0);
     this.fillVerbRafId = requestAnimationFrame(this._stepFillReverbBuild);
     this.app.showToast('8-Beat Master Reverb Build engaged', 'on-cyan');
@@ -262,12 +265,12 @@ export class FillsModule {
   // ---------------------------------------------------------------------------
 
   bindEvents() {
-    const st = this.app.state;
+    const state = this.app.state;
 
     // 1. Master Mix Filter & Auto Filter
     document.getElementById('btn-fill-filter').addEventListener('click', async () => {
-      st.fillFilterOn = !st.fillFilterOn;
-      if (!st.fillFilterOn && st.fillFilterAutoOn) {
+      state.fillFilterOn = !state.fillFilterOn;
+      if (!state.fillFilterOn && state.fillFilterAutoOn) {
         this.stopFillFilterAuto(true);
       }
       this.syncFillFilterUI();
@@ -277,23 +280,23 @@ export class FillsModule {
 
     document.querySelectorAll('.ffmode-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        st.fillFilterMode = btn.dataset.ffmode;
+        state.fillFilterMode = btn.dataset.ffmode;
         this.syncFillFilterUI();
         this.audio.applyFillFilter();
       });
     });
 
     document.getElementById('fill-filter-cutoff').addEventListener('input', (e) => {
-      if (st.fillFilterAutoOn) {
+      if (state.fillFilterAutoOn) {
         this.stopFillFilterAuto(false);
       }
-      st.fillFilterCutoff = sliderToLogFreq(Number(e.target.value));
+      state.fillFilterCutoff = sliderToLogFreq(Number(e.target.value));
       this.syncFillFilterUI();
       this.audio.applyFillFilter();
     });
 
     document.getElementById('fill-filter-q').addEventListener('input', (e) => {
-      st.fillFilterQ = Number(e.target.value);
+      state.fillFilterQ = Number(e.target.value);
       this.syncFillFilterUI();
       this.audio.applyFillFilter();
     });
@@ -305,28 +308,32 @@ export class FillsModule {
     // 2. All-Channel Rolls
     document.querySelectorAll('.roll-rate-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        st.allRollRate = Number(btn.dataset.roll);
+        state.allRollRate = Number(btn.dataset.roll);
         this.syncAllRollUI();
       });
     });
 
     document.getElementById('btn-all-roll-hold').addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      st.allRollHold = true;
+      state.allRollHold = true;
       this.syncAllRollUI();
     });
 
     document.getElementById('btn-all-roll-latch').addEventListener('click', () => {
-      st.allRollLatch = !st.allRollLatch;
+      state.allRollLatch = !state.allRollLatch;
       this.syncAllRollUI();
     });
 
     // 3. 8-Beat Master Reverb Build
     document.getElementById('fill-verb-wet').addEventListener('input', (e) => {
       const val = Number(e.target.value);
-      st.fillVerbMaxWet = val / 100;
+      state.fillVerbMaxWet = val / 100;
+      
+      const currentProgress = Math.max(0, Math.min(1, state.fillVerbProgress));
+      const beatsDone = state.fillVerbRunning ? Math.min(8, Math.floor(currentProgress * 8) + 1) : 0;
+    
       document.getElementById('fill-verb-wet-val').textContent = `${val}%`;
-      if (st.fillVerbRunning) this.audio.applyFillReverbProgress(st.fillVerbProgress);
+      if (state.fillVerbRunning) this.audio.applyFillReverbProgress(state.fillVerbProgress, beatsDone);
     });
 
     document.getElementById('btn-fill-verb-start').addEventListener('click', () => {

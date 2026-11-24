@@ -750,7 +750,17 @@ export class AudioGraph {
     this.masterFilterWet.gain.rampTo(this.state.fillFilterOn ? 1 : 0, 0.015);
   }
 
-  applyFillReverbProgress(p) {
+  applyFillReverbProgress(p, beatsDone) {
+    
+    if (beatsDone >= 7) {
+      // When the fill reverb is almost at the end,
+      // then start decreasing the reverb effect,
+      // else the end of the reverb sounds too abrupt
+      let p2 = 0.8 - (p - 0.8);
+      console.log("beatsDone", beatsDone, p2)
+      p = p2;
+    }
+      
     if (!this.fillVerbWet || !this.fillVerbDry) return;
     const gSmall = Math.max(0, 1 - p * 2.1);
     const gMed = Math.sin(p * Math.PI);
