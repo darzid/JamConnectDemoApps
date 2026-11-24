@@ -409,7 +409,7 @@
         </div>
 
         <!-- Master Bus & Send Effects -->
-        <div class="pt-3 border-t border-zinc-800">
+        <div id="master-bus" class="pt-3 border-t border-zinc-800">
           <div class="flex items-center gap-2 mb-2.5">
             <span class="led on-cyan"></span>
             <h3 class="font-mono-tech text-xs font-bold text-zinc-200">MASTER BUS &amp; GLOBAL SENDS</h3>
@@ -418,17 +418,37 @@
             <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
               <span class="font-mono-tech text-[10px] text-zinc-400">DUB DELAY FB</span>
               <input id="master-delay-fb" type="range" min="0" max="85" value="38" class="hw-slider w-28" />
-              <span id="master-delay-val" class="font-mono-tech text-[10px] text-amber-300 w-7 text-right">38%</span>
+              <span id="master-delay-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">38%</span>
             </div>
             <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
               <span class="font-mono-tech text-[10px] text-zinc-400">ROOM VERB</span>
               <input id="master-reverb-mix" type="range" min="0" max="100" value="30" class="hw-slider w-28" />
-              <span id="master-reverb-val" class="font-mono-tech text-[10px] text-amber-300 w-7 text-right">30%</span>
+              <span id="master-reverb-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">30%</span>
             </div>
             <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
               <span class="font-mono-tech text-[10px] text-zinc-400">BUS PUNCH</span>
               <input id="master-punch" type="range" min="0" max="100" value="45" class="hw-slider w-28" />
-              <span id="master-punch-val" class="font-mono-tech text-[10px] text-amber-300 w-7 text-right">45%</span>
+              <span id="master-punch-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">45%</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP KNEE</span>
+              <input id="master-comp-knee" type="range" min="0" max="40" value="4" class="hw-slider w-28" />
+              <span id="master-comp-knee-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">4</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP RATIO</span>
+              <input id="master-comp-ratio" type="range" min="1" max="20" value="4" class="hw-slider w-28" />
+              <span id="master-comp-ratio-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">4</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP ATTACK</span>
+              <input id="master-comp-attack" type="range" min="0.001" max="1" step="0.004" value="0.004" class="hw-slider w-28" />
+              <span id="master-comp-attack-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">0.004</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP RELEASE</span>
+              <input id="master-comp-release" type="range" min="0" max="1" step="0.14" value="0.004" class="hw-slider w-28" />
+              <span id="master-comp-release-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">0.14</span>
             </div>
           </div>
         </div>

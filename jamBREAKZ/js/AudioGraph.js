@@ -399,9 +399,10 @@ export class AudioGraph {
       this.masterDrive.oversample = '2x';
       this.masterCompressor = new Tone.Compressor({
         threshold: -16,
-        ratio: 4,
-        attack: 0.004,
-        release: 0.14
+        ratio: this.state.masterCompRatio,
+        attack: this.state.masterCompAttack,
+        release: this.state.masterCompRelease,
+        knee: this.state.masterCompKnee,
       });
       this.masterLimiter = new Tone.Limiter(-1.0);
       this.masterWaveform = new Tone.Waveform(128);
@@ -724,6 +725,22 @@ export class AudioGraph {
     }
   }
 
+  setMasterCompKnee(val) {
+    this.masterCompressor.knee.value = val;
+  }
+  
+  setMasterCompRatio(val) {
+    this.masterCompressor.ratio.value = val;
+  }
+  
+  setMasterCompAttack(val) {
+    this.masterCompressor.attack.value = val;
+  }
+  
+  setMasterCompRelease(val) {
+    this.masterCompressor.release.value = val;
+  }
+  
   applyFillFilter() {
     if (!this.masterFilter || !this.masterFilterDry || !this.masterFilterWet) return;
     this.masterFilter.type = this.state.fillFilterMode;

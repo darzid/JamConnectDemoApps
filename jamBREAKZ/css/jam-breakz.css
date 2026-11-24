@@ -221,3 +221,7 @@
       background: #33333c;
       border-radius: 3px;
     }
+    
+    #master-bus {
+      input[type="range"] { margin-left: auto; }
+    }

@@ -112,13 +112,29 @@ export class TrackFxModule {
     const rVal = document.getElementById('master-reverb-val');
     const pSlider = document.getElementById('master-punch');
     const pVal = document.getElementById('master-punch-val');
-
+    const ckSlider = document.getElementById('master-comp-knee');
+    const ckVal = document.getElementById('master-comp-knee-val');
+    const crSlider = document.getElementById('master-comp-ratio');
+    const crVal = document.getElementById('master-comp-ratio-val');
+    const caSlider = document.getElementById('master-comp-attack');
+    const caVal = document.getElementById('master-comp-attack-val');
+    const crelSlider = document.getElementById('master-comp-release');
+    const crelVal = document.getElementById('master-comp-release-val');
+    
     if (dSlider) dSlider.value = fbPct;
     if (dVal) dVal.textContent = `${fbPct}%`;
     if (rSlider) rSlider.value = revPct;
     if (rVal) rVal.textContent = `${revPct}%`;
     if (pSlider) pSlider.value = punchPct;
     if (pVal) pVal.textContent = `${punchPct}%`;
+    if (ckSlider) ckSlider.value = this.app.state.masterCompKnee;
+    if (ckVal) ckVal.textContent = `${this.app.state.masterCompKnee}`;
+    if (crSlider) crSlider.value = this.app.state.masterCompRatio;
+    if (crVal) crVal.textContent = `${this.app.state.masterCompRatio}`;
+    if (caSlider) caSlider.value = this.app.state.masterCompAttack;
+    if (caVal) caVal.textContent = `${this.app.state.masterCompAttack}`;
+    if (crelSlider) crelSlider.value = this.app.state.masterCompRelease;
+    if (crelVal) crelVal.textContent = `${this.app.state.masterCompRelease}`;
   }
 
   bindEvents() {
@@ -165,6 +181,34 @@ export class TrackFxModule {
       this.app.state.masterPunch = val / 100;
       document.getElementById('master-punch-val').textContent = `${val}%`;
       this.audio.setMasterPunch(this.app.state.masterPunch);
+    });
+    
+    document.getElementById('master-comp-knee').addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      this.app.state.masterCompKnee = val;
+      document.getElementById('master-comp-knee-val').textContent = `${val}`;
+      this.audio.setMasterCompKnee(this.app.state.masterCompKnee);
+    });
+    
+    document.getElementById('master-comp-ratio').addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      this.app.state.masterCompRatio = val;
+      document.getElementById('master-comp-ratio-val').textContent = `${val}`;
+      this.audio.setMasterCompRatio(this.app.state.masterCompRatio);
+    });
+    
+    document.getElementById('master-comp-attack').addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      this.app.state.masterCompAttack = val;
+      document.getElementById('master-comp-attack-val').textContent = `${val}`;
+      this.audio.setMasterCompAttack(this.app.state.masterCompAttack);
+    });
+    
+    document.getElementById('master-comp-release').addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      this.app.state.masterCompRelease = val;
+      document.getElementById('master-comp-release-val').textContent = `${val}`;
+      this.audio.setMasterCompRelease(this.app.state.masterCompRelease);
     });
   }
 }

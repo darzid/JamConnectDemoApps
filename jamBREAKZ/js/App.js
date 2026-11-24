@@ -451,7 +451,11 @@ export class App {
       master: {
         delayFb: this.state.masterDelayFb,
         reverbMix: this.state.masterReverbMix,
-        punch: this.state.masterPunch
+        punch: this.state.masterPunch,
+        compKnee: this.state.masterCompKnee,
+        compRatio: this.state.masterCompRatio,
+        compAttack: this.state.masterCompAttack,
+        compRelease: this.state.masterCompRelease,
       },
       voiceParams: this.tracks.map((tr) => ({ ...(tr.voiceParams || VOICE_RECIPES[tr.recipe] || VOICE_RECIPES.kick) })),
       fx: this.tracks.map((tr) => ({
@@ -521,7 +525,11 @@ export class App {
     this.state.masterDelayFb = kit.master.delayFb;
     this.state.masterReverbMix = kit.master.reverbMix;
     this.state.masterPunch = kit.master.punch;
-
+    this.state.masterCompKnee = kit.master.compKnee || 4;
+    this.state.masterCompRatio = kit.master.compRatio || 4;
+    this.state.masterCompAttack = kit.master.compAttack || 0.004;
+    this.state.masterCompRelease = kit.master.compRelease || 0.14;
+    
     this.tracks.forEach((tr, idx) => {
       if (isUser && kit.voiceParams && kit.voiceParams[idx]) {
         tr.voiceParams = { ...kit.voiceParams[idx] };

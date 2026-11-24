@@ -142,6 +142,10 @@ export function createInitialAppState() {
     masterDelayFb: 0.38,
     masterReverbMix: 0.30,
     masterPunch: 0.45,
+    masterCompKnee: 4,
+    masterCompRatio: 4,
+    masterCompAttack: 0.004,
+    masterCompRelease: 0.14,
     selectedTrack: 0,
     selectedStep: 0,
     seqMode: 'trig',        // 'trig' | 'plock'
