@@ -64,6 +64,38 @@ export class App {
       fx: new TrackFxModule(this, this.audio),
       fills: new FillsModule(this, this.audio)
     };
+    
+    lucide.createIcons();
+
+    this.btnPlay = document.getElementById('btn-play');
+    this.btnInvite = document.getElementById("invite-btn");
+    this.btnJoin = document.getElementById('join-btn');
+    this.btnResync = document.getElementById('resync-btn');
+    this.bpmInput = document.getElementById('bpm-input');
+    
+    this.btnInvite.addEventListener('click', async () => {
+      await this.jcClient.invite();
+    });
+    
+    this.btnJoin.addEventListener('click', async () => {
+      await this.jcClient.join();
+    });
+    
+    this.btnResync.addEventListener('click', () => {
+      this.jcClient.connector.resync();
+    });
+    
+    this.jcClient = new JamConnectClient("JamBREAKZ", document.getElementById("jamconnect"), false);
+    /*
+    this.jcClient.connector.getFullStateSnapshot = () => this.getFullStateJamConnectSnapshot();
+    this.jcClient.connector.applyFullStateSnapshot = (appName, snapshot) => this.applyFullStateJamConnectSnapshot(appName, snapshot);
+    this.jcClient.connector.onMasterSettingUpdated = (appName, setting, value) => this.applyJamConnectMasterSettingUpdate(appName, setting, value);
+    this.jcClient.connector.onDeviceParameterChanged = (appName, paramName, value, normalizedValue) => this.applyJamConnectDeviceParameterChange(appName, paramName, value, normalizedValue);
+    this.jcClient.connector.onPatternUpdated = (appName, instrumentName, pattern, stepIndex, stepData, presetName) => this.applyJamConnectPatternUpdate(appName, instrumentName, pattern, presetName);
+    this.jcClient.connector.onPatternStepUpdated = (appName, instrumentName, pattern, stepIndex, stepData, presetName) => this.applyJamConnectPatternStepUpdate(appName, instrumentName, stepIndex, stepData);
+    */
+    this.jcClient.onStateChanged = (state) => this.onStateChanged(state);
+    this.prevState = null;
   }
 
   init() {
@@ -84,6 +116,34 @@ export class App {
     this.bindEvents();
   }
 
+  onStateChanged(state) {
+    if (this.prevState && JSON.stringify(this.prevState) == JSON.stringify(state)) {
+      //console.log("onStateChanged: state unchanged", state, this.prevState);
+      return;
+    }
+    //console.log("onStateChanged", JSON.stringify(state));
+    this.prevState = state;
+    
+    this.btnInvite.disabled = !state.canInvite || state.isInviting;
+    this.btnInvite.classList.toggle("active", state.userRole === "Host");
+    this.btnJoin.disabled = !state.canJoin || state.isJoining;
+    this.btnJoin.classList.toggle("active", state.userRole === "Guest");
+    this.btnResync.style.display = state.userRole === "Host" && state.isPlaying ? "flex" : "none";
+    this.btnPlay.disabled = !state.canStart;
+    this.bpmInput.disabled = !state.canChangeBpm;
+    
+    this.audio.setBpm(state.bpm);
+    
+    if (this.jamBadge) {
+      if (state.userRole) {
+        this.jamBadge.classList.remove('hidden');
+        this.jamBadge.textContent = state.userRole === 'Host' ? `HOST (${state.sessionId || ''})` : `JAM (${state.sessionId || ''})`;
+      } else {
+        this.jamBadge.classList.add('hidden');
+      }
+    }
+  }
+  
   // ---------------------------------------------------------------------------
   // Toast, Save Modal & Status Helpers
   // ---------------------------------------------------------------------------
@@ -326,7 +386,9 @@ export class App {
 
   switchTab(tabName) {
     this.state.activeTab = tabName;
-    const tabs = ['sequencer', 'voice', 'fx', 'fills'];
+    var allTabButtons = document.querySelectorAll("button[data-tab]");
+    var tabs = [];
+    allTabButtons.forEach(button => tabs.push(button.dataset.tab));
     tabs.forEach((name) => {
       const panel = document.getElementById(`panel-${name}`);
       const btn = document.getElementById(`tab-${name}`);
@@ -475,10 +537,10 @@ export class App {
     this.state.bpm = config.bpm;
     this.state.swing = config.swing;
 
-    const bpmInput = document.getElementById('bpm-input');
+    
     const swingSlider = document.getElementById('swing-slider');
     const swingVal = document.getElementById('swing-val');
-    if (bpmInput) bpmInput.value = config.bpm;
+    if (this.bpmInput) this.bpmInput.value = config.bpm;
     if (swingSlider) swingSlider.value = Math.round(config.swing * 100);
     if (swingVal) swingVal.textContent = `${Math.round(config.swing * 100)}%`;
 
@@ -605,24 +667,24 @@ export class App {
     });
 
     // Transport Play / Stop
-    const btnPlay = document.getElementById('btn-play');
+    
     const playLabel = document.getElementById('play-label');
     const playIcon = document.getElementById('play-icon');
 
-    btnPlay.addEventListener('click', async () => {
+    this.btnPlay.addEventListener('click', async () => {
       if (!this.state.isPlaying) {
         await this.audio.startTransport();
         playLabel.textContent = 'STOP';
         playIcon.innerHTML = '<rect x="5" y="5" width="14" height="14" rx="2"></rect>';
-        btnPlay.classList.remove('hw-btn-amber');
-        btnPlay.classList.add('hw-btn-red');
+        this.btnPlay.classList.remove('hw-btn-amber');
+        this.btnPlay.classList.add('hw-btn-red');
       } else {
         this.audio.stopTransport();
         this.modules.sequencer.updatePlayhead(-1);
         playLabel.textContent = 'PLAY';
         playIcon.innerHTML = '<polygon points="6,4 20,12 6,20"></polygon>';
-        btnPlay.classList.remove('hw-btn-red');
-        btnPlay.classList.add('hw-btn-amber');
+        this.btnPlay.classList.remove('hw-btn-red');
+        this.btnPlay.classList.add('hw-btn-amber');
       }
     });
 
@@ -631,7 +693,7 @@ export class App {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.code === 'Space') {
         e.preventDefault();
-        btnPlay.click();
+        this.btnPlay.click();
       } else if (e.key === '1') {
         this.switchTab('sequencer');
       } else if (e.key === '2') {
@@ -649,14 +711,13 @@ export class App {
     });
 
     // BPM Controls
-    const bpmInput = document.getElementById('bpm-input');
     const updateBpm = (val) => {
       const clamped = Math.max(70, Math.min(200, Math.round(val)));
       this.state.bpm = clamped;
-      bpmInput.value = clamped;
+      this.bpmInput.value = clamped;
       this.audio.setBpm(clamped);
     };
-    bpmInput.addEventListener('change', () => updateBpm(Number(bpmInput.value)));
+    this.bpmInput.addEventListener('change', () => updateBpm(Number(this.bpmInput.value)));
     document.getElementById('bpm-dec').addEventListener('click', () => updateBpm(this.state.bpm - 2));
     document.getElementById('bpm-inc').addEventListener('click', () => updateBpm(this.state.bpm + 2));
 

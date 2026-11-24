@@ -12,7 +12,12 @@
 
   <!-- Tone.js 15.1.22 Audio Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.22/Tone.js"></script>
-
+	<script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://darzid.github.io/JamConnect/jamconnect.js"></script>
+  
   <!-- Hardware Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -80,7 +85,7 @@
         </button>
 
         <!-- BPM Control -->
-        <div style="margin-left: auto" class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+        <div class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
           <span class="font-mono-tech text-[10px] text-zinc-400">BPM</span>
           <button id="bpm-dec" class="hw-btn w-6 h-6 rounded text-xs font-bold flex items-center justify-center cursor-pointer">-</button>
           <input id="bpm-input" type="number" min="70" max="200" value="136" class="w-12 bg-transparent text-center font-mono-tech text-sm font-bold text-amber-400 focus:outline-none" />
@@ -88,16 +93,16 @@
         </div>
 
         <!-- Swing Control -->
-        <div style="width: stretch" class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+        <div class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
           <span class="font-mono-tech text-[10px] text-zinc-400">SWING</span>
-          <input id="swing-slider" type="range" min="0" max="50" value="14" style="width: stretch" class="hw-slider" />
+          <input id="swing-slider" type="range" min="0" max="50" value="14" class="hw-slider" />
           <span id="swing-val" class="font-mono-tech text-[11px] text-amber-300 w-7 text-right">14%</span>
         </div>
 
         <!-- Breakbeat Pattern Selector + Save/Delete -->
-        <div style="width: stretch" class="hw-inset rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+        <div class="hw-inset rounded-lg px-2 py-1.5 flex items-center gap-1.5">
           <span class="font-mono-tech text-[10px] text-zinc-400 hidden sm:inline">BREAK</span>
-          <select id="preset-select" aria-label="Breakbeat Pattern Preset" style="width: 62vw" class="bg-zinc-900 text-zinc-100 font-mono-tech text-xs rounded px-1.5 py-0.5 border border-zinc-700 focus:outline-none focus:border-amber-500 cursor-pointer">
+          <select id="preset-select" aria-label="Breakbeat Pattern Preset" style="width: 100%; max-width: 100%;" class="bg-zinc-900 text-zinc-100 font-mono-tech text-xs rounded px-1.5 py-0.5 border border-zinc-700 focus:outline-none focus:border-amber-500 cursor-pointer">
             <optgroup label="Classic &amp; Jungle">
               <option value="amen">01: Amen Jungle (164)</option>
               <option value="think">02: Think Funky (112)</option>
@@ -123,9 +128,9 @@
         </div>
 
         <!-- Analog Kit Preset Selector + Save/Delete -->
-        <div style="width: stretch" class="hw-inset rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+        <div class="hw-inset rounded-lg px-2 py-1.5 flex items-center gap-1.5">
           <span class="font-mono-tech text-[10px] text-zinc-400 hidden sm:inline">KIT</span>
-          <select id="kit-select" aria-label="Analog Drum Kit Preset" style="width: 62vw" class="bg-zinc-900 text-zinc-100 font-mono-tech text-xs rounded px-1.5 py-0.5 border border-zinc-700 focus:outline-none focus:border-cyan-500 cursor-pointer">
+          <select id="kit-select" aria-label="Analog Drum Kit Preset" style="width: 100%; max-width: 100%;" class="bg-zinc-900 text-zinc-100 font-mono-tech text-xs rounded px-1.5 py-0.5 border border-zinc-700 focus:outline-none focus:border-cyan-500 cursor-pointer">
             <optgroup label="Factory Kits">
               <option value="classic" selected>Kit A: Analog Classic</option>
               <option value="jungle94">Kit B: 94 Jungle Crunch</option>
@@ -178,6 +183,10 @@
       <button id="tab-fills" data-tab="fills" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
         <span id="tab-led-fills" class="led"></span>
         <span><span class="hidden sm:inline text-zinc-500 mr-1">04 //</span>FILLS</span>
+      </button>
+      <button id="tab-jam" data-tab="jam" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-jam" class="led"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">05 //</span>JAM</span>
       </button>
     </nav>
 
@@ -599,6 +608,42 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- MODULE 05: JAM -->
+      <section id="panel-jam" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+        <!-- Section Header & Quick Recipes -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold tracking-wide text-white flex items-center gap-2">
+              <span class="led on-red"></span>
+              JAM
+            </h2>
+            <p class="font-mono-tech text-[10px] text-zinc-400 mt-0.5">START A NEW JAM SESSION OR JOIN AN EXISTING ONE</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-2">
+          	<button id="invite-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
+            	<i data-lucide="radio" class="w-4 h-4 fill-emerald-700"></i> INVITE
+            </button>
+          	<button id="join-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
+            	<i data-lucide="plug-zap" class="w-4 h-4 fill-emerald-700"></i> JOIN
+            </button>
+            <button id="resync-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
+            	<i data-lucide="cloud-sync" class="w-4 h-4 fill-emerald-700"></i> RESYNC
+            </button>
+          </div>
+
+          <!-- Web MIDI Status & Selector -->
+          <div class="flex items-center gap-2 bg-slate-900 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">
+          	<span id="midi-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span class="text-[10px] font-mono uppercase text-slate-400">MIDI:</span>
+            <select id="midi-input-select" class="bg-slate-950 text-emerald-400 font-mono text-xs px-2 py-0.5 rounded border border-slate-700 outline-none">
+            	<option value="">No MIDI Device</option>
+            </select>
+          </div>
+          <div id="jamconnect"></div>
+				</div>
       </section>
 
     </main>
