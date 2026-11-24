@@ -1,0 +1,227 @@
+    :root {
+      --chassis-bg: #141416;
+      --panel-bg: #1c1c20;
+      --panel-border: #2c2c32;
+      --accent-amber: #f59e0b;
+      --accent-vermilion: #ef4444;
+      --accent-mint: #10b981;
+      --accent-cyan: #06b6d4;
+      --silkscreen: #d4d4d8;
+      --silkscreen-dim: #71717a;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--chassis-bg);
+      color: var(--silkscreen);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background-image:
+        radial-gradient(circle at 20% 0%, rgba(245, 158, 11, 0.06), transparent 45%),
+        radial-gradient(circle at 80% 100%, rgba(239, 68, 68, 0.05), transparent 45%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Hardware panel styling */
+    .hw-panel {
+      background: linear-gradient(180deg, #202025 0%, #19191d 100%);
+      border: 1px solid #2e2e36;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .hw-inset {
+      background: #121215;
+      border: 1px solid #27272d;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65);
+    }
+
+    /* Tactile hardware button */
+    .hw-btn {
+      background: linear-gradient(180deg, #2c2c34 0%, #222228 100%);
+      border: 1px solid #3a3a44;
+      box-shadow:
+        0 2px 0 #0d0d10,
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: transform 0.06s ease, box-shadow 0.06s ease, border-color 0.12s ease, background 0.12s ease;
+      user-select: none;
+    }
+
+    .hw-btn:active,
+    .hw-btn.pressed {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #0d0d10, inset 0 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    .hw-btn-amber {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+      border-color: #fbbf24;
+      color: #141416;
+      box-shadow: 0 2px 0 #78350f, 0 0 14px rgba(245, 158, 11, 0.25);
+    }
+
+    .hw-btn-red {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+      border-color: #f87171;
+      color: #ffffff;
+      box-shadow: 0 2px 0 #7f1d1d, 0 0 14px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Step Sequencer Pads */
+    .step-pad {
+      position: relative;
+      background: linear-gradient(180deg, #27272e 0%, #1d1d22 100%);
+      border: 1px solid #34343e;
+      box-shadow: 0 3px 0 #0e0e11, inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: all 0.08s ease;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .step-pad.beat-marker {
+      border-top: 2px solid #52525b;
+    }
+
+    .step-pad.active {
+      background: linear-gradient(180deg, #3b2d18 0%, #2a1f10 100%);
+      border-color: #f59e0b;
+      box-shadow: 0 3px 0 #0e0e11, 0 0 12px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(251, 191, 36, 0.25);
+    }
+
+    .step-pad.out-of-range {
+      opacity: 0.32;
+    }
+
+    .step-pad.selected-plock {
+      outline: 2px solid #06b6d4;
+      outline-offset: 1px;
+    }
+
+    .step-pad.playing {
+      border-color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.45), inset 0 0 8px rgba(255, 255, 255, 0.25) !important;
+    }
+
+    /* LED indicators */
+    .led {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: #27272a;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+      transition: background 0.06s ease, box-shadow 0.06s ease;
+    }
+
+    .led.on-amber {
+      background: #fbbf24;
+      box-shadow: 0 0 8px #f59e0b, inset 0 0 2px #fff;
+    }
+
+    .led.on-red {
+      background: #f87171;
+      box-shadow: 0 0 8px #ef4444, inset 0 0 2px #fff;
+    }
+
+    .led.on-mint {
+      background: #34d399;
+      box-shadow: 0 0 8px #10b981, inset 0 0 2px #fff;
+    }
+
+    .led.on-cyan {
+      background: #22d3ee;
+      box-shadow: 0 0 8px #06b6d4, inset 0 0 2px #fff;
+    }
+
+    /* Rotary Knob Container */
+    .knob-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .knob-svg {
+      cursor: ns-resize;
+      filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+    }
+
+    /* Range slider styling */
+    input[type='range'].hw-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #111114;
+      height: 6px;
+      border-radius: 9999px;
+      border: 1px solid #2e2e36;
+      outline: none;
+    }
+
+    input[type='range'].hw-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 9999px;
+      background: #f59e0b;
+      border: 2px solid #fef3c7;
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+    }
+
+    /* Capture flash animation */
+    @keyframes capturePulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .capture-flash {
+      animation: capturePulse 0.45s ease-out;
+    }
+
+    /* Hardware Module Tabs */
+    .tab-btn {
+      background: linear-gradient(180deg, #222228 0%, #19191e 100%);
+      border: 1px solid #2e2e36;
+      color: #a1a1aa;
+      transition: all 0.12s ease;
+    }
+
+    .tab-btn:hover {
+      color: #f4f4f5;
+      border-color: #3f3f4a;
+    }
+
+    .tab-btn.tab-active {
+      background: linear-gradient(180deg, #322819 0%, #241c11 100%);
+      border-color: #f59e0b;
+      color: #fbbf24;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.16), inset 0 1px 0 rgba(251, 191, 36, 0.2);
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121215;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #33333c;
+      border-radius: 3px;
+    }
+    
+    #master-bus {
+      input[type="range"] { margin-left: auto; }
+    }

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.22/Tone.js"></script>
+</head>
+
+<body>
+	<button id="playNote">Play note</button>
+	<br>
+	<label>Cutoff:<input type="range" id="cutoff-slider" min="50" max="500"></label><br>
+	<label>Cutoff mod rate:<input type="range" id="cutoffModRate-slider" min="0.1" max="2" step="0.1"></label><br>
+	<label>Res:<input type="range" id="resonance-slider" min="1" max="20" step="0.5"></label><br>
+	<label>EnvMod:<input type="range" id="envMod-slider" min="0.1" max="1" step="0.05"></label><br>
+	<label>Decay:<input type="range" id="decay-slider" min="0.1" max="1" step="0.05"></label><br>
+	<label>Accent:<input type="range" id="accent-slider" min="0" max="1" step="0.05"></label><br>
+	
+	
+	<script>
+	  // Create synth
+		const synth = new Tone.MonoSynth({
+      oscillator: {
+        type: "sawtooth"
+      },
+      envelope: {
+        attack: 0.003,
+        decay: 0.2,
+        sustain: 0,
+        release: 0.05
+      },
+      filter: {
+        Q: 1,
+        type: 'lowpass',
+        rolloff: -24
+      },
+    	filterEnvelope: {
+        attack: 0.003,
+        decay: 0.3,
+        sustain: 0.0,
+        release: 0.1,
+        baseFrequency: 400,
+        octaves: 0.6 * 5,
+        exponent: 2
+      }
+    });
+    
+    synth.toDestination();
+    
+    // Create LFO and Meter
+    const lfo = new Tone.LFO("1m", 100, 400);
+    const meter = new Tone.Meter({normalRange: true});
+    lfo.connect(meter);
+    lfo.start();
+    
+    
+    // Define constants for HTML elements
+    const playButton = document.getElementById("playNote");
+    const cutoffSlider = document.getElementById("cutoff-slider");
+    const cutoffModRateSlider = document.getElementById("cutoffModRate-slider");
+    const resonanceSlider = document.getElementById("resonance-slider");
+    const envModSlider = document.getElementById("envMod-slider");
+    const decaySlider = document.getElementById("decay-slider");
+    const accentSlider = document.getElementById("accent-slider");
+    
+    // Define variables for params
+    var envModParam = 0.6;
+    var decayParam = 0.3;
+    var accentParam = 0.8;
+    
+    // Register event handler for button 
+    playButton.addEventListener("click", async () => {
+    	if (! playing) {
+    		await Tone.start()
+    		
+    		Tone.Transport.start();
+    		playing = true;
+    	}
+    	else {
+    		Tone.Transport.stop();
+    		playing = false;
+    	}
+    });
+    
+    // Set initial values for sliders
+    cutoffModRateSlider.value = lfo.frequency.value;
+    resonanceSlider.value = synth.filter.Q.value;
+    envModSlider.value = envModParam;
+    decaySlider.value = synth.envelope.decay;
+    accentSlider.value = accentParam;
+    
+    // Register event handlers for sliders 
+    cutoffSlider.addEventListener("input", (e) => 
+    	synth.filterEnvelope.baseFrequency = e.target.value
+    );
+    cutoffModRateSlider.addEventListener("input", (e) => 
+    	lfo.frequency.value = e.target.value
+    );
+    resonanceSlider.addEventListener("input", (e) => 
+    	synth.filter.Q.value = e.target.value
+    );
+    envModSlider.addEventListener("input", (e) => 
+    	envModParam = e.target.value
+    );
+    decaySlider.addEventListener("input", (e) => 
+    	synth.envelope.decay = e.target.value
+    );
+    accentSlider.addEventListener("input", (e) => 
+    	accentParam = e.target.value
+    );
+    
+    // Define function that modulates Cutoff slider and value
+    function modulateCutoff() {
+		  const lfoValue = meter.getValue(); // Current audio-rate value as a JS number
+		  cutoffSlider.value = lfoValue;
+		  synth.filterEnvelope.baseFrequency = Math.max(100, lfoValue);
+			
+		  requestAnimationFrame(modulateCutoff);
+		}
+
+		modulateCutoff();
+    
+    // Define musical part/loop
+    var part = new Tone.Part(function(time, note, accent, slide){
+    	play303StepNote(note, accent, slide, "16n", time);
+    }, [
+      [0, "C2", false, true], 
+      ["0:0:1", "G1", true, true], 
+      ["0:0:2", "C3", false, true], 
+      ["0:0:3", "G2", false, true],
+      ["0:1:0", "G3", false, true], 
+      ["0:1:1", "G1", false, true], 
+      ["0:1:2", "G2", false, true], 
+      ["0:1:3", "G3", false, true], 
+    ]);
+    part.loop = true;
+    part.loopEnd = "2n";
+    part.start();
+    
+		var playing = false;
+	
+	  // Function that plays a 303 note
+		function play303StepNote(noteFreq, accent, slide, duration, time) 
+    {
+      try {
+        if (accent) {
+          synth.volume.setValueAtTime(4, time);
+          synth.filterEnvelope.octaves = envModParam * 7.5 * accentParam;
+          synth.envelope.decay = decayParam * 0.7;
+        } else {
+          synth.volume.setValueAtTime(0, time);
+          synth.filterEnvelope.octaves = envModParam * 4.5;
+          synth.envelope.decay = decayParam;
+        }
+        
+        synth.portamento = slide ? 0.08 : 0;
+        synth.triggerAttackRelease(noteFreq, duration, time);
+      }
+      catch (err) {
+        console.error("error", err, err.stack)
+      }
+    }
+		
+    
+		
+	</script>
+</body>
+
+</html>

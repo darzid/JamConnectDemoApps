@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="JamBREAKZ // drumDING Tone.js 15.1.22 Analog Drum Voice Synthesizer &amp; Self-Sampling 6-Track Breakbeat Sequencer" />
+  <title>JamBREAKZ // drumDING Tone.js Breakbeat Synth &amp; Sampler</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='24' height='24' rx='5' fill='%23141416' stroke='none'/%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M8 12h2l1.5-3.5 2 7L15 12h1'/%3E%3C/svg%3E" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tone.js 15.1.22 Audio Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.22/Tone.js"></script>
+
+  <!-- Hardware Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+	<link rel="stylesheet" href="./css/jam-breakz.css" />
+</head>
+<body class="p-2 sm:p-4 lg:p-5">
+
+  <!-- Toast Notification (replaces alert/confirm) -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-200">
+    <div class="hw-panel px-4 py-2.5 rounded-lg border-amber-500/50 flex items-center gap-2.5 shadow-2xl">
+      <span id="toast-dot" class="led on-amber"></span>
+      <span id="toast-text" class="font-mono-tech text-xs text-zinc-100">Ready</span>
+    </div>
+  </div>
+
+  <!-- Hardware Save Preset Modal (replaces window.prompt) -->
+  <div id="save-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+    <div class="hw-panel rounded-xl p-4 w-full max-w-sm space-y-3 border-amber-500/40">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="led on-amber"></span>
+          <h3 id="save-modal-title" class="font-mono-tech text-xs font-bold text-white">SAVE PRESET</h3>
+        </div>
+        <button id="save-modal-close" class="font-mono-tech text-xs text-zinc-400 hover:text-white cursor-pointer">✕</button>
+      </div>
+      <input id="save-modal-input" type="text" maxlength="32" placeholder="Enter preset name..." class="w-full hw-inset rounded-lg px-3 py-2 font-mono-tech text-xs text-zinc-100 focus:outline-none focus:border-amber-500" />
+      <div class="flex justify-end gap-2">
+        <button id="save-modal-cancel" class="hw-btn px-3 py-1.5 rounded-lg font-mono-tech text-[10px] font-bold text-zinc-300 cursor-pointer">CANCEL</button>
+        <button id="save-modal-confirm" class="hw-btn hw-btn-amber px-3.5 py-1.5 rounded-lg font-mono-tech text-[10px] font-bold cursor-pointer">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Hardware Chassis -->
+  <div class="max-w-7xl mx-auto space-y-3 sm:space-y-4">
+
+    <!-- TOP BAR: BRANDING, TRANSPORT, PRESETS & OSCILLOSCOPE -->
+    <header class="hw-panel rounded-xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+      <!-- Brand & Audio Status -->
+      <div class="flex items-center justify-between lg:justify-start gap-4">
+        <div class="flex items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white leading-none">
+                Jam<span class="text-amber-400">BREAKZ</span>
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio Status Pill -->
+        <div id="audio-status-pill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full hw-inset font-mono-tech text-[10px] text-zinc-400">
+          <span id="audio-led" class="led"></span>
+          <span id="audio-status-text">STANDBY</span>
+        </div>
+      </div>
+
+      <!-- Transport & Tempo Controls -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+        <button id="btn-play" class="hw-btn hw-btn-amber px-4 py-2.5 rounded-lg font-mono-tech text-xs font-bold flex items-center gap-2 cursor-pointer">
+          <svg id="play-icon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"></polygon></svg>
+          <span id="play-label">PLAY</span>
+        </button>
+
+        <!-- BPM Control -->
+        <div style="margin-left: auto" class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+          <span class="font-mono-tech text-[10px] text-zinc-400">BPM</span>
+          <button id="bpm-dec" class="hw-btn w-6 h-6 rounded text-xs font-bold flex items-center justify-center cursor-pointer">-</button>
+          <input id="bpm-input" type="number" min="70" max="200" value="136" class="w-12 bg-transparent text-center font-mono-tech text-sm font-bold text-amber-400 focus:outline-none" />
+          <button id="bpm-inc" class="hw-btn w-6 h-6 rounded text-xs font-bold flex items-center justify-center cursor-pointer">+</button>
+        </div>
+
+        <!-- Swing Control -->
+        <div style="width: stretch" class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+          <span class="font-mono-tech text-[10px] text-zinc-400">SWING</span>
+          <input id="swing-slider" type="range" min="0" max="50" value="14" style="width: stretch" class="hw-slider" />
+          <span id="swing-val" class="font-mono-tech text-[11px] text-amber-300 w-7 text-right">14%</span>
+        </div>
+
+        <!-- Breakbeat Pattern Selector + Save/Delete -->
+        <div style="width: stretch" class="hw-inset rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+          <span class="font-mono-tech text-[10px] text-zinc-400 hidden sm:inline">BREAK</span>
+          <select id="preset-select" aria-label="Breakbeat Pattern Preset" style="width: 62vw" class="bg-zinc-900 text-zinc-100 font-mono-tech text-xs rounded px-1.5 py-0.5 border border-zinc-700 focus:outline-none focus:border-amber-500 cursor-pointer">
+            <optgroup label="Classic &amp; Jungle">
+              <option value="amen">01: Amen Jungle (164)</option>
+              <option value="think">02: Think Funky (112)</option>
+              <option value="apache">03: Apache B-Boy (116)</option>
+              <option value="liquid">04: Liquid DnB Roller (174)</option>
+            </optgroup>
+            <optgroup label="UK Bass &amp; Club">
+              <option value="electro" selected>05: Electro Break (136)</option>
+              <option value="ukg">06: 2-Step Garage (132)</option>
+              <option value="footwork">07: Footwork Juke (160)</option>
+              <option value="bigbeat">08: Acid Big Beat (128)</option>
+            </optgroup>
+            <optgroup label="Crate, Dub &amp; Leftfield">
+              <option value="boombap">09: Boom Bap Chop (92)</option>
+              <option value="dubstep">10: Dubwise Halfstep (140)</option>
+              <option value="industrial">11: Broken Techno (144)</option>
+              <option value="idm">12: IDM Drill'n'Bass (170)</option>
+            </optgroup>
+            <optgroup id="user-patterns-group" label="User Saved Breaks"></optgroup>
+          </select>
+          <button id="btn-save-pattern" class="hw-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] font-bold text-amber-300 cursor-pointer" title="Save current sequence preset">SAVE</button>
+          <button id="btn-del-pattern" class="hw-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] font-bold text-zinc-400 hover:text-red-400 cursor-pointer hidden" title="Delete selected user sequence preset">DEL</button>
+        </div>
+
+        <!-- Analog Kit Preset Selector + Save/Delete -->
+        <div style="width: stretch" class="hw-inset rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+          <span class="font-mono-tech text-[10px] text-zinc-400 hidden sm:inline">KIT</span>
+          <select id="kit-select" aria-label="Analog Drum Kit Preset" style="width: 62vw" class="bg-zinc-900 text-zinc-100 font-mono-tech text-xs rounded px-1.5 py-0.5 border border-zinc-700 focus:outline-none focus:border-cyan-500 cursor-pointer">
+            <optgroup label="Factory Kits">
+              <option value="classic" selected>Kit A: Analog Classic</option>
+              <option value="jungle94">Kit B: 94 Jungle Crunch</option>
+              <option value="electro808">Kit C: 808 Electro</option>
+              <option value="dustympc">Kit D: Dusty Crate 12-Bit</option>
+              <option value="industrial">Kit E: Industrial Glitch</option>
+              <option value="dubsystem">Kit F: Dubwise System</option>
+            </optgroup>
+            <optgroup id="user-kits-group" label="User Saved Kits"></optgroup>
+          </select>
+          <button id="btn-save-kit" class="hw-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] font-bold text-cyan-300 cursor-pointer" title="Save current drum kit">SAVE</button>
+          <button id="btn-del-kit" class="hw-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] font-bold text-zinc-400 hover:text-red-400 cursor-pointer hidden" title="Delete selected user drum kit">DEL</button>
+        </div>
+      </div>
+
+      <!-- Live Master Oscilloscope -->
+      <div class="hw-inset rounded-lg p-1.5 flex items-center gap-2 lg:w-48 h-12">
+        <canvas id="master-scope" class="w-full h-full rounded"></canvas>
+      </div>
+    </header>
+
+    <!-- PERSISTENT 6-TRACK SELECTOR STRIP -->
+    <section class="hw-panel rounded-xl p-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2">
+          <span class="led on-mint"></span>
+          <h2 class="text-xs sm:text-sm font-bold tracking-wide text-white">6-TRACK SAMPLE ENGINE</h2>
+        </div>
+        <span class="font-mono-tech text-[10px] text-zinc-400">SELECT TRACK TO SEQUENCE, SAMPLE, OR SHAPE FX</span>
+      </div>
+      <div id="tracks-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <!-- Dynamically populated 6 track cards -->
+      </div>
+    </section>
+
+    <!-- MODULE TAB NAVIGATION BAR -->
+    <nav class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="tablist" aria-label="Drum Machine Modules">
+      <button id="tab-sequencer" data-tab="sequencer" role="tab" aria-selected="true" class="tab-btn tab-active rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-sequencer" class="led on-amber"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">01 //</span>SEQUENCER</span>
+      </button>
+      <button id="tab-voice" data-tab="voice" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-voice" class="led"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">02 //</span>ANALOG VOICE</span>
+      </button>
+      <button id="tab-fx" data-tab="fx" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-fx" class="led"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">03 //</span>TRACK FX &amp; MIX</span>
+      </button>
+      <button id="tab-fills" data-tab="fills" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-fills" class="led"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">04 //</span>FILLS</span>
+      </button>
+    </nav>
+
+    <!-- TABBED MODULE WORKSPACE -->
+    <main>
+
+      <!-- MODULE 01: 16-STEP BREAKBEAT SEQUENCER & P-LOCK EDITOR -->
+      <section id="panel-sequencer" class="module-panel hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+        <div>
+          <!-- Sequencer Mode & Tools Header -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <div class="hw-inset p-1 rounded-lg flex items-center gap-1">
+                <button id="mode-trig" class="px-2.5 py-1 rounded-md font-mono-tech text-[10px] font-bold bg-amber-500 text-zinc-950 transition cursor-pointer">TRIGGER</button>
+                <button id="mode-plock" class="px-2.5 py-1 rounded-md font-mono-tech text-[10px] font-bold text-zinc-400 hover:text-white transition cursor-pointer">P-LOCK / RATCHET</button>
+              </div>
+              <span id="seq-mode-hint" class="font-mono-tech text-[10px] text-zinc-500 hidden md:inline">Tap pads to toggle steps • Right-click any step to P-Lock</span>
+            </div>
+
+            <!-- Breakbeat Performance & Utility Buttons -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button id="btn-fill" class="hw-btn px-3 py-1.5 rounded-lg font-mono-tech text-[10px] font-bold text-cyan-300 border-cyan-500/40 flex items-center gap-1.5 cursor-pointer">
+                <span id="fill-led" class="led"></span>
+                HOLD FILL
+              </button>
+              <button id="btn-break-gen" class="hw-btn px-2.5 py-1.5 rounded-lg font-mono-tech text-[10px] font-bold text-amber-300 cursor-pointer" title="Generate breakbeat variation for current track">
+                BREAK VAR
+              </button>
+              <button id="btn-clear-track" class="hw-btn px-2.5 py-1.5 rounded-lg font-mono-tech text-[10px] font-bold text-zinc-400 hover:text-red-400 cursor-pointer">
+                CLEAR
+              </button>
+            </div>
+          </div>
+
+          <!-- 16-Step Pad Grid (4 cols mobile, 8 tablet, 16 desktop) -->
+          <div id="step-grid" class="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-[repeat(16,minmax(0,1fr))] gap-1.5 sm:gap-2">
+            <!-- Dynamically rendered 16 pads -->
+          </div>
+        </div>
+
+        <!-- STEP PARAMETER-LOCK & RATCHET INSPECTOR -->
+        <div class="hw-inset rounded-lg p-3 border border-cyan-500/20">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="led on-cyan"></span>
+              <span id="plock-title" class="font-mono-tech text-xs font-bold text-cyan-300">STEP 01 P-LOCK INSPECTOR</span>
+              <span id="plock-active-badge" class="font-mono-tech text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">OFF</span>
+            </div>
+            <button id="btn-reset-plock" class="font-mono-tech text-[10px] text-zinc-400 hover:text-cyan-300 underline cursor-pointer">
+              Reset Step Locks
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <!-- Velocity -->
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono-tech text-[10px]">
+                <span class="text-zinc-400">VEL</span>
+                <span id="pl-vel-val" class="text-amber-300">100%</span>
+              </div>
+              <input id="pl-vel" type="range" min="15" max="100" value="100" class="hw-slider w-full" />
+            </div>
+
+            <!-- Ratchet / Repeat (Breakbeat Rolls!) -->
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono-tech text-[10px]">
+                <span class="text-zinc-400">RATCHET</span>
+                <span id="pl-ratchet-val" class="text-cyan-300">1x</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1" id="pl-ratchet-btns">
+                <button data-r="1" class="r-btn hw-btn py-1 rounded font-mono-tech text-[10px] font-bold cursor-pointer">1x</button>
+                <button data-r="2" class="r-btn hw-btn py-1 rounded font-mono-tech text-[10px] font-bold cursor-pointer">2x</button>
+                <button data-r="3" class="r-btn hw-btn py-1 rounded font-mono-tech text-[10px] font-bold cursor-pointer">3x</button>
+                <button data-r="4" class="r-btn hw-btn py-1 rounded font-mono-tech text-[10px] font-bold cursor-pointer">4x</button>
+              </div>
+            </div>
+
+            <!-- Pitch Lock -->
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono-tech text-[10px]">
+                <span class="text-zinc-400">PITCH LOCK</span>
+                <span id="pl-pitch-val" class="text-amber-300">0 st</span>
+              </div>
+              <input id="pl-pitch" type="range" min="-12" max="12" value="0" class="hw-slider w-full" />
+            </div>
+
+            <!-- Probability -->
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono-tech text-[10px]">
+                <span class="text-zinc-400">PROB</span>
+                <span id="pl-prob-val" class="text-emerald-400">100%</span>
+              </div>
+              <input id="pl-prob" type="range" min="10" max="100" step="5" value="100" class="hw-slider w-full" />
+            </div>
+
+            <!-- Micro-Timing -->
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono-tech text-[10px]">
+                <span class="text-zinc-400">MICRO</span>
+                <span id="pl-micro-val" class="text-amber-300">0 ms</span>
+              </div>
+              <input id="pl-micro" type="range" min="-35" max="35" value="0" class="hw-slider w-full" />
+            </div>
+
+            <!-- Step Reverse Lock -->
+            <div class="space-y-1 flex flex-col justify-between">
+              <span class="font-mono-tech text-[10px] text-zinc-400">STEP REV</span>
+              <button id="pl-rev" class="hw-btn w-full py-1 rounded font-mono-tech text-[10px] font-bold text-zinc-300 cursor-pointer">NORMAL</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 02: SINGLE ANALOG DRUM VOICE + SELF-SAMPLER -->
+      <section id="panel-voice" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+        <!-- Section Header & Quick Recipes -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold tracking-wide text-white flex items-center gap-2">
+              <span class="led on-red"></span>
+              ANALOG VOICE SYNTHESIZER
+              <span class="font-mono-tech text-[10px] px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">1-VOICE SYNTH</span>
+            </h2>
+            <p class="font-mono-tech text-[10px] text-zinc-400 mt-0.5">SCULPT DRUM SOUND → SAMPLE DIRECTLY INTO ANY TRACK ABOVE</p>
+          </div>
+
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5" id="voice-recipes">
+            <button data-recipe="kick" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-zinc-200 hover:border-amber-500/60 cursor-pointer">PUNCH KICK</button>
+            <button data-recipe="snare" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-zinc-200 hover:border-amber-500/60 cursor-pointer">CRISP SNARE</button>
+            <button data-recipe="ghost" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-zinc-200 hover:border-amber-500/60 cursor-pointer">GHOST RIM</button>
+            <button data-recipe="ch" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-zinc-200 hover:border-amber-500/60 cursor-pointer">TIGHT HAT</button>
+            <button data-recipe="oh" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-zinc-200 hover:border-amber-500/60 cursor-pointer">OPEN HAT</button>
+            <button data-recipe="perc" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-zinc-200 hover:border-amber-500/60 cursor-pointer">FM TOM/PERC</button>
+            <button data-recipe="sub808" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-cyan-300 hover:border-cyan-400/60 cursor-pointer">808 SUB BD</button>
+            <button data-recipe="junglesnare" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-cyan-300 hover:border-cyan-400/60 cursor-pointer">JUNGLE SNAP</button>
+            <button data-recipe="clap" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-cyan-300 hover:border-cyan-400/60 cursor-pointer">CRUNCH CLAP</button>
+            <button data-recipe="clang" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-cyan-300 hover:border-cyan-400/60 cursor-pointer">METAL CLANG</button>
+            <button data-recipe="zap" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-cyan-300 hover:border-cyan-400/60 cursor-pointer">DUB ZAP</button>
+            <button data-recipe="ride" class="hw-btn py-1.5 px-2 rounded-md font-mono-tech text-[10px] text-cyan-300 hover:border-cyan-400/60 cursor-pointer">CRISP RIDE</button>
+          </div>
+        </div>
+
+        <!-- Synth Parameter Blocks (3-column layout on desktop) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- VCO & BEND -->
+          <div class="hw-inset rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="font-mono-tech text-[10px] font-bold text-amber-400">VCO + PITCH BEND</span>
+              <span id="vco-wave-readout" class="font-mono-tech text-[9px] text-zinc-400">SINE → SQR</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2" id="knobs-vco"></div>
+          </div>
+
+          <!-- NOISE & CLICK -->
+          <div class="hw-inset rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="font-mono-tech text-[10px] font-bold text-amber-400">NOISE + IMPULSE CLICK</span>
+              <span class="font-mono-tech text-[9px] text-zinc-400">PINK / BLUE</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2" id="knobs-noise"></div>
+          </div>
+
+          <!-- MULTIMODE FILTER & MOD -->
+          <div class="hw-inset rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="font-mono-tech text-[10px] font-bold text-amber-400">VCF + LFO MOD</span>
+              <div class="flex gap-1" id="filter-mode-group">
+                <button data-fmode="lowpass" class="fmode-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] bg-amber-500 text-zinc-950 font-bold cursor-pointer">LP</button>
+                <button data-fmode="bandpass" class="fmode-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] bg-zinc-800 text-zinc-400 cursor-pointer">BP</button>
+                <button data-fmode="highpass" class="fmode-btn px-1.5 py-0.5 rounded font-mono-tech text-[9px] bg-zinc-800 text-zinc-400 cursor-pointer">HP</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-4 gap-2" id="knobs-filter"></div>
+          </div>
+        </div>
+
+        <!-- ANALOG AUDITION & SELF-SAMPLE ACTION BAR -->
+        <div class="pt-2 border-t border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <p class="font-mono-tech text-[10px] text-zinc-400">
+            Select a destination track (T1–T6) above, audition with <span class="text-zinc-200">TRIG VOICE</span>, then <span class="text-red-400">SAMPLE</span> to bounce it in!
+          </p>
+          <div class="grid grid-cols-2 gap-2.5 sm:w-80 shrink-0">
+            <button id="btn-trig-analog" class="hw-btn py-2.5 rounded-lg font-mono-tech text-xs font-bold text-white flex items-center justify-center gap-2 hover:border-amber-400 cursor-pointer">
+              <span class="led on-amber"></span>
+              TRIG VOICE
+            </button>
+            <button id="btn-capture-sample" class="hw-btn hw-btn-red py-2.5 rounded-lg font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"></circle></svg>
+              <span id="capture-label">SAMPLE → T1</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 03: SELECTED TRACK SAMPLE ENGINE, INSERT FX & MASTER BUS -->
+      <section id="panel-fx" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 space-y-4">
+        <!-- Selected Track Insert FX -->
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-2.5 mb-3">
+            <div class="flex items-center gap-2.5">
+              <span id="selected-track-badge" class="px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-mono-tech text-xs font-bold">T1: KICK</span>
+              <span class="font-mono-tech text-[10px] text-zinc-400">SAMPLE PLAYBACK &amp; INSERT FX</span>
+            </div>
+
+            <!-- Polymeter Track Length & Reverse Toggle -->
+            <div class="flex items-center gap-2">
+              <div class="hw-inset rounded-md px-2 py-1 flex items-center gap-1.5">
+                <span class="font-mono-tech text-[10px] text-zinc-400">STEPS</span>
+                <button id="len-dec" class="hw-btn w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center cursor-pointer">-</button>
+                <span id="track-len-val" class="font-mono-tech text-xs font-bold text-amber-400 w-5 text-center">16</span>
+                <button id="len-inc" class="hw-btn w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center cursor-pointer">+</button>
+              </div>
+
+              <button id="btn-track-reverse" class="hw-btn px-2.5 py-1 rounded-md font-mono-tech text-[10px] font-bold text-zinc-300 flex items-center gap-1.5 cursor-pointer">
+                <span id="rev-led" class="led"></span>
+                REV
+              </button>
+
+              <button id="btn-audition-track" class="hw-btn px-2.5 py-1 rounded-md font-mono-tech text-[10px] font-bold text-amber-300 cursor-pointer">
+                HIT
+              </button>
+            </div>
+          </div>
+
+          <!-- Track Knobs (Pitch, Decay, Drive, Crush, Delay, Reverb, Level) -->
+          <div class="hw-inset rounded-lg p-3">
+            <div class="grid grid-cols-4 sm:grid-cols-7 gap-2" id="knobs-track"></div>
+          </div>
+        </div>
+
+        <!-- Master Bus & Send Effects -->
+        <div id="master-bus" class="pt-3 border-t border-zinc-800">
+          <div class="flex items-center gap-2 mb-2.5">
+            <span class="led on-cyan"></span>
+            <h3 class="font-mono-tech text-xs font-bold text-zinc-200">MASTER BUS &amp; GLOBAL SENDS</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">DUB DELAY FB</span>
+              <input id="master-delay-fb" type="range" min="0" max="85" value="38" class="hw-slider w-28" />
+              <span id="master-delay-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">38%</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">ROOM VERB</span>
+              <input id="master-reverb-mix" type="range" min="0" max="100" value="30" class="hw-slider w-28" />
+              <span id="master-reverb-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">30%</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS PUNCH</span>
+              <input id="master-punch" type="range" min="0" max="100" value="45" class="hw-slider w-28" />
+              <span id="master-punch-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">45%</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP KNEE</span>
+              <input id="master-comp-knee" type="range" min="0" max="40" value="4" class="hw-slider w-28" />
+              <span id="master-comp-knee-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">4</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP RATIO</span>
+              <input id="master-comp-ratio" type="range" min="1" max="20" value="4" class="hw-slider w-28" />
+              <span id="master-comp-ratio-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">4</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP ATTACK</span>
+              <input id="master-comp-attack" type="range" min="0.001" max="1" step="0.004" value="0.004" class="hw-slider w-28" />
+              <span id="master-comp-attack-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">0.004</span>
+            </div>
+            <div class="hw-inset rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+              <span class="font-mono-tech text-[10px] text-zinc-400">BUS COMP RELEASE</span>
+              <input id="master-comp-release" type="range" min="0" max="1" step="0.14" value="0.004" class="hw-slider w-28" />
+              <span id="master-comp-release-val" class="w-[30px] font-mono-tech text-[10px] text-amber-300 w-7 text-right">0.14</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODULE 04: PERFORMANCE FILLS (MASTER FILTER, ALL-CHANNEL ROLLS & 8-BEAT REVERB BUILD) -->
+      <section id="panel-fills" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="led on-cyan"></span>
+            <h2 class="text-sm font-bold tracking-wide text-white">LIVE FILL &amp; TRANSITION ENGINE</h2>
+          </div>
+          <span class="font-mono-tech text-[10px] text-zinc-400">MASTER FILTER • ALL-CHANNEL ROLLS • 8-BEAT EXPANDING REVERB</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <!-- 1. MASTER MIX FILTER -->
+          <div class="hw-inset rounded-lg p-3 flex flex-col justify-between gap-3">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-mono-tech text-[10px] font-bold text-amber-400">1 // MASTER MIX FILTER</span>
+                <button id="btn-fill-filter" class="hw-btn px-2.5 py-1 rounded-md font-mono-tech text-[10px] font-bold text-zinc-300 flex items-center gap-1.5 cursor-pointer">
+                  <span id="fill-filter-led" class="led"></span>
+                  BYPASS
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="font-mono-tech text-[10px] text-zinc-400">MODE</span>
+                <div class="flex gap-1" id="fill-filter-mode-group">
+                  <button data-ffmode="lowpass" class="ffmode-btn px-2 py-0.5 rounded font-mono-tech text-[10px] bg-amber-500 text-zinc-950 font-bold cursor-pointer">LP</button>
+                  <button data-ffmode="bandpass" class="ffmode-btn px-2 py-0.5 rounded font-mono-tech text-[10px] bg-zinc-800 text-zinc-400 cursor-pointer">BP</button>
+                  <button data-ffmode="highpass" class="ffmode-btn px-2 py-0.5 rounded font-mono-tech text-[10px] bg-zinc-800 text-zinc-400 cursor-pointer">HP</button>
+                </div>
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between font-mono-tech text-[10px]">
+                  <span class="text-zinc-400">CUTOFF</span>
+                  <span id="fill-filter-cutoff-val" class="text-amber-300">2.4 kHz</span>
+                </div>
+                <input id="fill-filter-cutoff" type="range" min="0" max="1000" value="670" class="hw-slider w-full" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between font-mono-tech text-[10px]">
+                  <span class="text-zinc-400">RESONANCE Q</span>
+                  <span id="fill-filter-q-val" class="text-amber-300">2.5</span>
+                </div>
+                <input id="fill-filter-q" type="range" min="0.5" max="14" step="0.1" value="2.5" class="hw-slider w-full" />
+              </div>
+
+              <!-- 8-Step Auto Filter LED Progress Bar (shown only when Auto Filter is enabled) -->
+              <div id="fill-filter-auto-indicator" class="space-y-1.5 hidden">
+                <div class="flex justify-between font-mono-tech text-[9px] text-zinc-400">
+                  <span>AUTO SWEEP</span>
+                  <span id="fill-filter-step-val">0 / 8 STEPS</span>
+                </div>
+                <div class="grid grid-cols-8 gap-1.5">
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">1</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">2</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">3</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">4</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">5</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">6</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">7</span></div>
+                  <div class="flex flex-col items-center gap-1"><span class="led fill-filter-step-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">8</span></div>
+                </div>
+              </div>
+            </div>
+
+            <button id="btn-fill-filter-auto" class="hw-btn w-full py-2 rounded-lg font-mono-tech text-xs font-bold text-amber-300 flex items-center justify-center gap-2 cursor-pointer">
+              <span id="fill-filter-auto-led" class="led"></span>
+              AUTO FILTER
+            </button>
+          </div>
+
+          <!-- 2. ALL-CHANNEL ROLLS -->
+          <div class="hw-inset rounded-lg p-3 flex flex-col justify-between gap-3">
+            <div class="flex items-center justify-between">
+              <span class="font-mono-tech text-[10px] font-bold text-cyan-400">2 // ALL-CHANNEL ROLLS</span>
+              <span id="all-roll-status" class="font-mono-tech text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">IDLE</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <span class="font-mono-tech text-[10px] text-zinc-400">ROLL DIVISION (ALL AUDIBLE TRACKS)</span>
+              <div class="grid grid-cols-4 gap-1.5" id="all-roll-rate-group">
+                <button data-roll="1" class="roll-rate-btn hw-btn py-1.5 rounded font-mono-tech text-[10px] font-bold cursor-pointer">1/16</button>
+                <button data-roll="2" class="roll-rate-btn hw-btn hw-btn-amber py-1.5 rounded font-mono-tech text-[10px] font-bold cursor-pointer">1/32</button>
+                <button data-roll="3" class="roll-rate-btn hw-btn py-1.5 rounded font-mono-tech text-[10px] font-bold cursor-pointer">TRIP</button>
+                <button data-roll="4" class="roll-rate-btn hw-btn py-1.5 rounded font-mono-tech text-[10px] font-bold cursor-pointer">1/64</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button id="btn-all-roll-hold" class="hw-btn py-2.5 rounded-lg font-mono-tech text-xs font-bold text-cyan-300 border-cyan-500/40 flex items-center justify-center gap-2 cursor-pointer">
+                <span id="all-roll-hold-led" class="led"></span>
+                HOLD ROLL
+              </button>
+              <button id="btn-all-roll-latch" class="hw-btn py-2.5 rounded-lg font-mono-tech text-xs font-bold text-zinc-300 flex items-center justify-center gap-2 cursor-pointer">
+                <span id="all-roll-latch-led" class="led"></span>
+                LATCH
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. 8-BEAT EXPANDING MASTER REVERB -->
+          <div class="hw-inset rounded-lg p-3 flex flex-col justify-between gap-3">
+            <div class="flex items-center justify-between">
+              <span class="font-mono-tech text-[10px] font-bold text-purple-400">3 // 8-BEAT MASTER REVERB</span>
+              <span id="fill-verb-room-val" class="font-mono-tech text-[10px] text-amber-300">0.5s ROOM</span>
+            </div>
+
+            <!-- 8-Beat LED Progress Bar -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between font-mono-tech text-[9px] text-zinc-400">
+                <span>BEAT PROGRESS</span>
+                <span id="fill-verb-beat-val">0 / 8 BEATS</span>
+              </div>
+              <div class="grid grid-cols-8 gap-1.5" id="fill-verb-leds">
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">1</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">2</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">3</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">4</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">5</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">6</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">7</span></div>
+                <div class="flex flex-col items-center gap-1"><span class="led fill-beat-led"></span><span class="font-mono-tech text-[8px] text-zinc-500">8</span></div>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono-tech text-[10px]">
+                <span class="text-zinc-400">MAX WET DEPTH</span>
+                <span id="fill-verb-wet-val" class="text-amber-300">75%</span>
+              </div>
+              <input id="fill-verb-wet" type="range" min="15" max="100" value="75" class="hw-slider w-full" />
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              <button id="btn-fill-verb-start" class="col-span-2 hw-btn hw-btn-amber py-2 rounded-lg font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+                <span id="fill-verb-led" class="led"></span>
+                8-BEAT BUILD
+              </button>
+              <button id="btn-fill-verb-reset" class="hw-btn py-2 rounded-lg font-mono-tech text-[10px] font-bold text-zinc-300 cursor-pointer">
+                RESET
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ES MODULE ENTRY POINT -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@ import { JamConnectApp } from "../../js/jamconnect-app.js";
 
 export class JamFMApp extends JamConnectApp {
   constructor() {
-    super("jamFM", new JamFMAudioGraph(), "#22c55e");
+    super("jamFM", new JamFMAudioGraph(), { visualizerStrokeColor: "#22c55e" });
     
     super.registerServiceWorker("/jamFM/jamFM-service-worker.js", "/jamFM/");
     this.sequencer = new JamFMSequencer(this.jcClient, this.audioGraph, this.themeColorName);

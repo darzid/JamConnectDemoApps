@@ -36,8 +36,12 @@ jobs:
           mkdir -p _site
           
           cp index.html jamconnect-manifest.json jamconnect-app.js jamconnect-service-worker.js _site
+          
           mkdir -p _site/css
           cp -r ./css/* _site/css
+          
+          mkdir -p _site/images
+          cp -r ./images/* _site/images
           
           mkdir -p _site/js
           cp -r ./js/* _site/js
@@ -48,6 +52,9 @@ jobs:
           mkdir -p _site/jam303
           cp -r ./jam303/* _site/jam303
 
+          mkdir -p _site/jamBREAKZ
+          cp -r ./jamBREAKZ/* _site/jamBREAKZ
+          
           mkdir -p _site/jamFM
           cp -r ./jamFM/* _site/jamFM
           

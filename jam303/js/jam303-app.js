@@ -4,7 +4,7 @@ import { JamConnectApp } from "../../js/jamconnect-app.js";
 
 export class Jam303App extends JamConnectApp {
   constructor() {
-    super("jam303", new Jam303AudioGraph(), "#22c55e");
+    super("jam303", new Jam303AudioGraph(), { visualizerStrokeColor: "#22c55e" });
     
     super.registerServiceWorker("/jam303/jam303-service-worker.js", "/jam303/");
     this.sequencer = new Jam303Sequencer(this.jcClient, this.audioGraph, this.themeColorName);
@@ -18,7 +18,7 @@ export class Jam303App extends JamConnectApp {
     let parts = parameterId.split(".");
     let deviceName = parts[0];
     let parameterName = parts[1];
-    let deviceKnobs = document.getElementById("rotary-knobs");
+    let deviceKnobs = document.getElementById(deviceName + "-knobs");
     deviceKnobs.innerHTML += this.createKnobHtml(deviceName, parameterName);
   }
   
@@ -36,6 +36,34 @@ export class Jam303App extends JamConnectApp {
     return html;
   }
   
+  createParameterSwitch(parameterId, parameterControlMapping) {
+    //console.log("jam909App.createParameterKnob")
+    let parts = parameterId.split(".");
+    let deviceName = parts[0];
+    let parameterName = parts[1];
+    let deviceKnobs = document.getElementById(deviceName + "-switches");
+    
+    deviceKnobs.innerHTML += this.createSwitchHtml(deviceName, parameterName, parameterControlMapping.options, parameterControlMapping.optionNames);
+  }
+  
+  createSwitchHtml(deviceName, parameterName, options, optionNames) {
+    let buttonsHtml = "";
+    
+    let index = 0;
+    console.log("options", options)
+    options.forEach(option => {
+      let activeClass = (index == 0) ? "active-led " : "";
+      buttonsHtml += `<button data-parameter="${deviceName}.${parameterName}" data-value="${option}" class="${activeClass} min-w-[30px] px-0.5 py-1 text-[10px] font-bold rounded synth-btn text-slate-900 mr-1">${optionNames[index]}</button>`;
+      index++;
+    });
+    
+    //<div id="${deviceName}.${parameterName}" class="flex flex-row gap-0 p-0 text-center">${buttonsHtml}</div>
+    let html = `<div class="min-w-[70px] device-switch flex flex-col mb-1 flex-start">
+        <span class="text-[11px] font-extrabold uppercase text-slate-700 mb-0">${parameterName.toUpperCase()}</span>
+        <div id="${deviceName}.${parameterName}" class="text-center">${buttonsHtml}</div></div>`;
+    return html;
+  }
+
   jamConnectNotePlayed(appName, instrument, note, velocity, duration, time) {
   	if (Tone.Transport.state == 'started' && !this.sequencer.isSequenceEmpty)
   		return;

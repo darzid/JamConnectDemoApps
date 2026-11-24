@@ -160,7 +160,7 @@ const parameters = {
     	value: "2n.",
       deviceParameter: "frequency.value",
       options: [    '16n.' , '16n',  '8n.',  '8n',  '4n.',  '4n',  '2n.',  '2n',  '1n'],
-			optionNames: ["1/16t", "1/16", "1/8t", "1/8", "1/4t", "1/4", "1/2t", "1/2", "1/1"],
+			optionNames: ["1/16.", "1/16", "1/8.", "1/8", "1/4.", "1/4", "1/2.", "1/2", "1/1"],
     },
 	},
 	
@@ -234,7 +234,7 @@ const parameters = {
 			value: "8n.",
 			deviceParameter: "delayTime.value",
 			options:     ['16n.' , '16n',  '8n.',  '8n',  '4n.',  '4n',  '2n.',  '2n',  "1n"],
-			optionNames: ["1/16t", "1/16", "1/8t", "1/8", "1/4t", "1/4", "1/2t", "1/2", "1/1"]
+			optionNames: ["1/16.", "1/16", "1/8.", "1/8", "1/4.", "1/4", "1/2.", "1/2", "1/1"]
 		},
     feedback: {
 			value: 0.5,
