@@ -377,7 +377,7 @@ export class AudioGraph {
       this.fillVerbDry = new Tone.Gain(1.0);
       this.fillVerbWet = new Tone.Gain(0);
       this.fillVerbOut = new Tone.Gain(1.0);
-      this.fillVerbDelay = new Tone.PingPongDelay({delayTime: "8n", wet: 0});
+      this.fillVerbDelay = new Tone.PingPongDelay({delayTime: "4n", wet: 0});
 
       this.masterFilterOut.connect(this.fillVerbDry);
       this.fillVerbDry.connect(this.fillVerbOut);
