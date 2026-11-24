@@ -223,6 +223,7 @@ export class Jam303AudioGraph extends AudioGraphBase {
       wet: this.params.delay.amount.value,
     });
     
+    
     // Saturation / Distortion Unit
     this.devices.effects.distortion = new Tone.Distortion({
       oversample: this.params.distortion.oversample.value,
@@ -230,6 +231,8 @@ export class Jam303AudioGraph extends AudioGraphBase {
       wet: this.params.distortion.dryWet.value,
     });
     
+    
+    // TB303
     this.devices.instruments.tb303 = new Tone.MonoSynth({
       oscillator: {
         type: this.params.tb303.waveform.value
@@ -256,28 +259,6 @@ export class Jam303AudioGraph extends AudioGraphBase {
       }
     });
     this.devices.instruments.tb303._accent = this.params.tb303.accent.value;
-    
-  	this.devices.modules.filter = new Tone.Filter();
-
-		this.devices.modules.cutoffLfo = new Tone.LFO(
-    	this.params.cutoffLfo.rate.value, 
-    	this.params.tb303.cutoff.range.min,
-    	this.params.tb303.cutoff.range.max
-  	);
-  	this.devices.modules.cutoffLfo.phase = this.params.cutoffLfo.phase.value;
-  	
-  	this.devices.modules.cutoffLfo.connect(this.devices.modules.filter.frequency);
-    this.devices.modules.cutoffLfo.start();
-    
-    this.devices.modules.resonanceLfo = new Tone.LFO(
-    	this.params.resonanceLfo.rate.value, 
-    	this.params.tb303.resonance.range.min,
-    	this.params.tb303.resonance.range.max
-  	);
-  	this.devices.modules.resonanceLfo.phase = this.params.resonanceLfo.phase.value;
-  	
-  	this.devices.modules.resonanceLfo.connect(this.devices.instruments.tb303.filter.Q);
-    this.devices.modules.resonanceLfo.start();
     
     Object.defineProperty(this.devices.instruments.tb303, "decay", {
       get:()=>{return this.devices.instruments.tb303.envelope.decay; },
@@ -308,7 +289,31 @@ export class Jam303AudioGraph extends AudioGraphBase {
         }
     });
     
+    
+    // Modulated Filter + LFO's
+  	this.devices.modules.filter = new Tone.Filter();
 
+		// Cutoff LFO
+		this.devices.modules.cutoffLfo = new Tone.LFO(
+    	this.params.cutoffLfo.rate.value, 
+    	this.params.tb303.cutoff.range.min,
+    	this.params.tb303.cutoff.range.max
+  	);
+  	this.devices.modules.cutoffLfo.phase = this.params.cutoffLfo.phase.value;
+  	this.devices.modules.cutoffLfo.connect(this.devices.modules.filter.frequency);
+    this.devices.modules.cutoffLfo.start();
+    
+    // Resonance LFO
+    this.devices.modules.resonanceLfo = new Tone.LFO(
+    	this.params.resonanceLfo.rate.value, 
+    	this.params.tb303.resonance.range.min,
+    	this.params.tb303.resonance.range.max
+  	);
+  	this.devices.modules.resonanceLfo.phase = this.params.resonanceLfo.phase.value;
+  	this.devices.modules.resonanceLfo.connect(this.devices.instruments.tb303.filter.Q);
+    this.devices.modules.resonanceLfo.start();
+    
+    
     // Chain 303 Audio Routing
     this.devices.instruments.tb303.chain(this.devices.modules.filter, this.devices.effects.distortion, this.devices.effects.delay, this.groupBus);
   }
