@@ -30,6 +30,7 @@ export class AudioGraph {
     this.fillVerbDry = null;
     this.fillVerbWet = null;
     this.fillVerbOut = null;
+    this.fillVerbDelay = null;
 
     this.masterDrive = null;
     this.masterCompressor = null;
@@ -376,6 +377,7 @@ export class AudioGraph {
       this.fillVerbDry = new Tone.Gain(1.0);
       this.fillVerbWet = new Tone.Gain(0);
       this.fillVerbOut = new Tone.Gain(1.0);
+      this.fillVerbDelay = new Tone.PingPongDelay({delayTime: "8n", wet: 0});
 
       this.masterFilterOut.connect(this.fillVerbDry);
       this.fillVerbDry.connect(this.fillVerbOut);
@@ -393,7 +395,9 @@ export class AudioGraph {
       this.fillVerbLargeGain.connect(this.fillVerbWet);
 
       this.fillVerbWet.connect(this.fillVerbOut);
-
+      
+      this.fillVerbOut.connect(this.fillVerbDelay);
+      
       // 3) Master Drive, Compression & Limiting
       this.masterDrive = new Tone.WaveShaper(this.makeShaperCurve(this.state.masterPunch * 0.55, 0), SHAPER_SAMPLES);
       this.masterDrive.oversample = '2x';
@@ -407,7 +411,7 @@ export class AudioGraph {
       this.masterLimiter = new Tone.Limiter(-1.0);
       this.masterWaveform = new Tone.Waveform(128);
 
-      this.fillVerbOut.chain(this.masterDrive, this.masterCompressor, this.masterLimiter, Tone.getDestination());
+      this.fillVerbDelay.chain(this.masterDrive, this.masterCompressor, this.masterLimiter, Tone.getDestination());
       this.masterLimiter.connect(this.masterWaveform);
 
       // Global Send FX: Tempo-Synced Dub PingPong Delay & Native-Convolver Room Reverb
@@ -758,8 +762,12 @@ export class AudioGraph {
       // else the end of the reverb sounds too abrupt
       let p2 = 0.8 - (p - 0.8);
       console.log("beatsDone", beatsDone, p2)
+      this.fillVerbDelay.wet.rampTo(0.5);
+      if (beatsDone == 8)
+        this.fillVerbDelay.wet.rampTo(0, "2n");
       p = p2;
     }
+    
       
     if (!this.fillVerbWet || !this.fillVerbDry) return;
     const gSmall = Math.max(0, 1 - p * 2.1);
