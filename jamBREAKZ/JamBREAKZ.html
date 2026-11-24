@@ -12,7 +12,12 @@
 
   <!-- Tone.js 15.1.22 Audio Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.22/Tone.js"></script>
-
+	<script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://darzid.github.io/JamConnect/jamconnect.js"></script>
+  
   <!-- Hardware Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -178,6 +183,10 @@
       <button id="tab-fills" data-tab="fills" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
         <span id="tab-led-fills" class="led"></span>
         <span><span class="hidden sm:inline text-zinc-500 mr-1">04 //</span>FILLS</span>
+      </button>
+      <button id="tab-jam" data-tab="jam" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-jam" class="led"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">05 //</span>JAM</span>
       </button>
     </nav>
 
@@ -599,6 +608,42 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- MODULE 05: JAM -->
+      <section id="panel-jam" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+        <!-- Section Header & Quick Recipes -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold tracking-wide text-white flex items-center gap-2">
+              <span class="led on-red"></span>
+              JAM
+            </h2>
+            <p class="font-mono-tech text-[10px] text-zinc-400 mt-0.5">START A NEW JAM SESSION OR JOIN AN EXISTING ONE</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-2">
+          	<button id="invite-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
+            	<i data-lucide="radio" class="w-4 h-4 fill-emerald-700"></i> INVITE
+            </button>
+          	<button id="join-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
+            	<i data-lucide="plug-zap" class="w-4 h-4 fill-emerald-700"></i> JOIN
+            </button>
+            <button id="resync-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
+            	<i data-lucide="cloud-sync" class="w-4 h-4 fill-emerald-700"></i> RESYNC
+            </button>
+          </div>
+
+          <!-- Web MIDI Status & Selector -->
+          <div class="flex items-center gap-2 bg-slate-900 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">
+          	<span id="midi-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span class="text-[10px] font-mono uppercase text-slate-400">MIDI:</span>
+            <select id="midi-input-select" class="bg-slate-950 text-emerald-400 font-mono text-xs px-2 py-0.5 rounded border border-slate-700 outline-none">
+            	<option value="">No MIDI Device</option>
+            </select>
+          </div>
+          <div id="jamconnect"></div>
+				</div>
       </section>
 
     </main>
