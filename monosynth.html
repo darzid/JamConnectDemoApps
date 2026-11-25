@@ -17,7 +17,7 @@
 	<label>EnvMod:<input type="range" id="envMod-slider" min="0.1" max="1" step="0.05"></label><br>
 	<label>Decay:<input type="range" id="decay-slider" min="0.1" max="1" step="0.05"></label><br>
 	<label>Accent:<input type="range" id="accent-slider" min="0" max="1" step="0.05"></label><br>
-	
+	<label>Drive:<input type="range" id="drive-slider" min="0" max="1" step="0.1"></label><br>
 	
 	<script>
 	  // Create synth
@@ -47,7 +47,10 @@
       }
     });
     
-    synth.toDestination();
+    var dist = new Tone.Distortion(0.5);
+    dist.wet = 1;
+    synth.connect(dist);
+    dist.toDestination();
     
     // Create LFO and Meter
     const lfo = new Tone.LFO("1m", 100, 400);
@@ -64,6 +67,7 @@
     const envModSlider = document.getElementById("envMod-slider");
     const decaySlider = document.getElementById("decay-slider");
     const accentSlider = document.getElementById("accent-slider");
+		const driveSlider = document.getElementById("drive-slider");
     
     // Define variables for params
     var envModParam = 0.6;
@@ -90,7 +94,8 @@
     envModSlider.value = envModParam;
     decaySlider.value = synth.envelope.decay;
     accentSlider.value = accentParam;
-    
+		driveSlider.value = dist.order;
+		
     // Register event handlers for sliders 
     cutoffSlider.addEventListener("input", (e) => 
     	synth.filterEnvelope.baseFrequency = e.target.value
@@ -109,6 +114,9 @@
     );
     accentSlider.addEventListener("input", (e) => 
     	accentParam = e.target.value
+    );
+    driveSlider.addEventListener("input", (e) => 
+    	dist.distortion.value = e.target.value
     );
     
     // Define function that modulates Cutoff slider and value

@@ -16,7 +16,7 @@ import { SequencerModule } from './modules/SequencerModule.js';
 import { AnalogVoiceModule } from './modules/AnalogVoiceModule.js';
 import { TrackFxModule } from './modules/TrackFxModule.js';
 import { FillsModule } from './modules/FillsModule.js';
-
+import { JamClientUI } from '../../js/jamclient-ui.js';
 /**
  * Core Application Controller: owns shared state, top bar, 6-track strip,
  * preset/kit storage, modals/toasts, and coordinates AudioGraph + tab modules.
@@ -68,24 +68,11 @@ export class App {
     lucide.createIcons();
 
     this.btnPlay = document.getElementById('btn-play');
-    this.btnInvite = document.getElementById("invite-btn");
-    this.btnJoin = document.getElementById('join-btn');
-    this.btnResync = document.getElementById('resync-btn');
     this.bpmInput = document.getElementById('bpm-input');
     
-    this.btnInvite.addEventListener('click', async () => {
-      await this.jcClient.invite();
-    });
-    
-    this.btnJoin.addEventListener('click', async () => {
-      await this.jcClient.join();
-    });
-    
-    this.btnResync.addEventListener('click', () => {
-      this.jcClient.connector.resync();
-    });
-    
     this.jcClient = new JamConnectClient("JamBREAKZ", document.getElementById("jamconnect"), false);
+    let jcClientUI = new JamClientUI(this.jcClient, "jamConnectButtons", this.onStateChanged);
+    
     /*
     this.jcClient.connector.getFullStateSnapshot = () => this.getFullStateJamConnectSnapshot();
     this.jcClient.connector.applyFullStateSnapshot = (appName, snapshot) => this.applyFullStateJamConnectSnapshot(appName, snapshot);
@@ -97,7 +84,7 @@ export class App {
     this.jcClient.onStateChanged = (state) => this.onStateChanged(state);
     this.prevState = null;
   }
-
+  
   init() {
     this.initTrackCards();
 
@@ -117,22 +104,7 @@ export class App {
   }
 
   onStateChanged(state) {
-    if (this.prevState && JSON.stringify(this.prevState) == JSON.stringify(state)) {
-      //console.log("onStateChanged: state unchanged", state, this.prevState);
-      return;
-    }
-    //console.log("onStateChanged", JSON.stringify(state));
-    this.prevState = state;
-    
-    this.btnInvite.disabled = !state.canInvite || state.isInviting;
-    this.btnInvite.classList.toggle("active", state.userRole === "Host");
-    this.btnJoin.disabled = !state.canJoin || state.isJoining;
-    this.btnJoin.classList.toggle("active", state.userRole === "Guest");
-    this.btnResync.style.display = state.userRole === "Host" && state.isPlaying ? "flex" : "none";
-    this.btnPlay.disabled = !state.canStart;
     this.bpmInput.disabled = !state.canChangeBpm;
-    
-    this.audio.setBpm(state.bpm);
     
     if (this.jamBadge) {
       if (state.userRole) {
