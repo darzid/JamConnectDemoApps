@@ -124,7 +124,7 @@ export class FillsModule {
     this.fillFilterAutoRafId = requestAnimationFrame(this._stepFillFilterAuto);
   }
 
-  async toggleFillFilterAuto() {
+  async toggleFillFilterAuto(steps) {
     const state = this.app.state;
     if (state.fillFilterAutoOn) {
       this.stopFillFilterAuto(true);
@@ -301,8 +301,12 @@ export class FillsModule {
       this.audio.applyFillFilter();
     });
 
-    document.getElementById('btn-fill-filter-auto').addEventListener('click', () => {
-      this.toggleFillFilterAuto();
+    document.getElementById('btn-fill-filter-auto4').addEventListener('click', () => {
+      this.toggleFillFilterAuto(4);
+    });
+    
+    document.getElementById('btn-fill-filter-auto8').addEventListener('click', () => {
+      this.toggleFillFilterAuto(8);
     });
 
     // 2. All-Channel Rolls
@@ -333,7 +337,7 @@ export class FillsModule {
       const beatsDone = state.fillVerbRunning ? Math.min(8, Math.floor(currentProgress * 8) + 1) : 0;
     
       document.getElementById('fill-verb-wet-val').textContent = `${val}%`;
-      if (state.fillVerbRunning) this.audio.applyFillReverbProgress(state.fillVerbProgress, beatsDone);
+      if (state.fillVerbRunning) this.audio.applyFillReverbProgress(state.fillVerbProgress, beats);
     });
 
     document.getElementById('btn-fill-verb-start').addEventListener('click', () => {

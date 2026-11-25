@@ -188,6 +188,10 @@
         <span id="tab-led-jam" class="led"></span>
         <span><span class="hidden sm:inline text-zinc-500 mr-1">05 //</span>JAM</span>
       </button>
+      <button id="tab-midi" data-tab="midi" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        <span id="tab-led-midi" class="led"></span>
+        <span><span class="hidden sm:inline text-zinc-500 mr-1">06 //</span>MIDI</span>
+      </button>
     </nav>
 
     <!-- TABBED MODULE WORKSPACE -->
@@ -529,9 +533,14 @@
               </div>
             </div>
 
-            <button id="btn-fill-filter-auto" class="hw-btn w-full py-2 rounded-lg font-mono-tech text-xs font-bold text-amber-300 flex items-center justify-center gap-2 cursor-pointer">
+            <button id="btn-fill-filter-auto4" class="hw-btn w-full py-2 rounded-lg font-mono-tech text-xs font-bold text-amber-300 flex items-center justify-center gap-2 cursor-pointer">
               <span id="fill-filter-auto-led" class="led"></span>
-              AUTO FILTER
+              AUTO FILTER 4
+            </button>
+            
+          	<button id="btn-fill-filter-auto8" class="hw-btn w-full py-2 rounded-lg font-mono-tech text-xs font-bold text-amber-300 flex items-center justify-center gap-2 cursor-pointer">
+              <span id="fill-filter-auto-led" class="led"></span>
+              AUTO FILTER 8
             </button>
           </div>
 
@@ -622,18 +631,24 @@
             <p class="font-mono-tech text-[10px] text-zinc-400 mt-0.5">START A NEW JAM SESSION OR JOIN AN EXISTING ONE</p>
           </div>
           
-          <div class="flex flex-wrap items-center gap-2">
-          	<button id="invite-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
-            	<i data-lucide="radio" class="w-4 h-4 fill-emerald-700"></i> INVITE
-            </button>
-          	<button id="join-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
-            	<i data-lucide="plug-zap" class="w-4 h-4 fill-emerald-700"></i> JOIN
-            </button>
-            <button id="resync-btn" class="px-4 py-2 hw-btn text-emerald-800 font-black rounded-lg text-xs sm:text-sm flex items-center gap-2 hover:bg-white">
-            	<i data-lucide="cloud-sync" class="w-4 h-4 fill-emerald-700"></i> RESYNC
-            </button>
-          </div>
+          <div id="jamConnectButtons"/>
+          <div id="jamconnect"></div>
+          
+				</div>
+      </section>
 
+      <!-- MODULE 06: MIDI -->
+      <section id="panel-midi" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+        <!-- Section Header & Quick Recipes -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold tracking-wide text-white flex items-center gap-2">
+              <span class="led on-red"></span>
+              MIDI
+            </h2>
+            <p class="font-mono-tech text-[10px] text-zinc-400 mt-0.5">SELECT MIDI DEVICE</p>
+          </div>
+          
           <!-- Web MIDI Status & Selector -->
           <div class="flex items-center gap-2 bg-slate-900 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">
           	<span id="midi-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
@@ -642,10 +657,10 @@
             	<option value="">No MIDI Device</option>
             </select>
           </div>
-          <div id="jamconnect"></div>
+          
 				</div>
       </section>
-
+      
     </main>
   </div>
 
