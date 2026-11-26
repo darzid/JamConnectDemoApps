@@ -1,0 +1,2889 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSY-BASS 303/909 — Psytrance Bassline Synthesizer & Sequencer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#090a0f',
+            chassis: '#0f111a',
+            panel: '#151824',
+            borderSubtle: '#1e2235',
+            accentCyan: '#06b6d4',
+            accentEmerald: '#10b981',
+            accentAmber: '#f59e0b',
+            accentRose: '#f43f5e',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background-color: #090a0f;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Hardware Custom Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #1e2235;
+      border: 1px solid #282e47;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #06b6d4;
+      border: 2px solid #090a0f;
+      box-shadow: 0 0 8px rgba(6, 182, 212, 0.7);
+      margin-top: -5px;
+      transition: transform 0.1s ease, background-color 0.15s ease;
+    }
+    input[type="range"]:hover::-webkit-slider-thumb {
+      transform: scale(1.15);
+    }
+    input[type="range"].slider-amber::-webkit-slider-thumb {
+      background: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+    }
+    input[type="range"].slider-emerald::-webkit-slider-thumb {
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    }
+    input[type="range"].slider-rose::-webkit-slider-thumb {
+      background: #f43f5e;
+      box-shadow: 0 0 8px rgba(244, 63, 94, 0.7);
+    }
+    input[type="range"]:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* Hardware LED Glows */
+    .led-cyan { box-shadow: 0 0 10px rgba(6, 182, 212, 0.65); }
+    .led-emerald { box-shadow: 0 0 10px rgba(16, 185, 129, 0.65); }
+    .led-amber { box-shadow: 0 0 10px rgba(245, 158, 11, 0.65); }
+    .led-rose { box-shadow: 0 0 10px rgba(244, 63, 94, 0.65); }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090a0f; }
+    ::-webkit-scrollbar-thumb { background: #1e2235; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2e3552; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- MAIN HARDWARE CHASSIS CONTAINER -->
+  <div class="max-w-[1440px] w-full mx-auto px-3 sm:px-5 py-3 sm:py-4 flex-1 flex flex-col gap-3.5">
+
+    <!-- =================================================================== -->
+    <!-- PERSISTENT HEADER & MASTER TRANSPORT                                -->
+    <!-- =================================================================== -->
+    <header class="bg-chassis border border-borderSubtle rounded-2xl p-3 sm:p-4 shadow-2xl">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
+
+        <!-- BRANDING & MASTER TRANSPORT -->
+        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <div class="flex items-center gap-2.5 pr-2 border-r border-borderSubtle">
+            <div class="w-8 h-8 rounded-xl bg-accentCyan/15 border border-accentCyan/40 flex items-center justify-center">
+              <span class="w-2.5 h-2.5 rounded-full bg-accentCyan led-cyan"></span>
+            </div>
+            <div>
+              <div class="text-xs font-mono font-extrabold tracking-widest text-white">PSY-BASS <span class="text-accentCyan">MK3</span></div>
+              <div class="text-[10px] font-mono text-slate-400">PHASE-LOCKED BASS ENGINE</div>
+            </div>
+          </div>
+
+          <!-- Play / Stop Transport -->
+          <button id="btn-play" class="flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-extrabold text-xs bg-accentEmerald text-black hover:brightness-110 active:scale-95 transition-all led-emerald cursor-pointer" title="Spacebar to Play/Stop">
+            <svg id="icon-play" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="icon-stop" class="w-3.5 h-3.5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+            <span id="label-play">PLAY</span>
+          </button>
+
+          <!-- WAV Export Button -->
+          <button id="btn-open-wav" class="flex items-center gap-1.5 px-3 py-2 rounded-xl font-mono font-bold text-xs bg-panel text-accentCyan border border-accentCyan/40 hover:bg-accentCyan hover:text-black active:scale-95 transition-all cursor-pointer" title="Render & Export Loop to 16-bit Stereo WAV">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            <span>WAV</span>
+          </button>
+
+          <!-- BPM Slider -->
+          <div class="bg-panel border border-borderSubtle rounded-xl px-3 py-1.5 flex items-center gap-2.5">
+            <div>
+              <div class="text-[9px] font-mono uppercase text-slate-400">TEMPO</div>
+              <div class="text-xs font-mono font-bold text-accentCyan"><span id="val-bpm">142</span> <span class="text-[10px] text-slate-400">BPM</span></div>
+            </div>
+            <input id="input-bpm" type="range" min="130" max="155" step="1" value="142" class="w-20 sm:w-24" />
+          </div>
+
+          <!-- Root Key & Octave -->
+          <div class="bg-panel border border-borderSubtle rounded-xl px-3 py-1.5 flex items-center gap-2">
+            <div>
+              <div class="text-[9px] font-mono uppercase text-slate-400">ROOT KEY</div>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <select id="select-key" class="bg-chassis text-white font-mono text-xs font-bold rounded-md px-1.5 py-0.5 border border-borderSubtle focus:outline-none focus:border-accentCyan cursor-pointer">
+                  <option value="C">C</option>
+                  <option value="C#">C#</option>
+                  <option value="D">D</option>
+                  <option value="D#">D#</option>
+                  <option value="E">E</option>
+                  <option value="F" selected>F</option>
+                  <option value="F#">F#</option>
+                  <option value="G">G</option>
+                  <option value="G#">G#</option>
+                  <option value="A">A</option>
+                  <option value="A#">A#</option>
+                  <option value="B">B</option>
+                </select>
+                <div class="flex items-center bg-chassis rounded-md p-0.5 border border-borderSubtle">
+                  <button data-oct="1" class="oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold bg-accentCyan text-black cursor-pointer">1</button>
+                  <button data-oct="2" class="oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer">2</button>
+                  <button data-oct="3" class="oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer">3</button>
+                </div>
+              </div>
+            </div>
+            <div class="pl-2 border-l border-borderSubtle text-right">
+              <div class="text-[9px] font-mono text-slate-400">FUND.</div>
+              <div id="hud-root-freq" class="text-xs font-mono font-bold text-white">43.7 Hz</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4x4 PSYTRANCE REFERENCE KICK & DUAL-TRACE OSCILLOSCOPE -->
+        <div class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 sm:gap-3">
+
+          <!-- 4x4 Reference Kick Module -->
+          <div class="bg-panel border border-borderSubtle rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <button id="btn-kick-toggle" class="px-2.5 py-1 rounded-lg font-mono text-[11px] font-extrabold bg-accentAmber text-black led-amber transition cursor-pointer" title="Shortcut: K">
+                4x4 KICK: ON
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="w-16">
+                <div class="flex justify-between text-[9px] font-mono text-slate-400">
+                  <span>LVL</span>
+                  <span id="val-kick-vol" class="text-accentAmber">-2.0dB</span>
+                </div>
+                <input id="input-kick-vol" type="range" min="-24" max="6" step="0.5" value="-2" class="w-full slider-amber" />
+              </div>
+
+              <div class="w-16">
+                <div class="flex justify-between text-[9px] font-mono text-slate-400">
+                  <span>PUNCH</span>
+                  <span id="val-kick-punch" class="text-accentAmber">65%</span>
+                </div>
+                <input id="input-kick-punch" type="range" min="0" max="100" step="1" value="65" class="w-full slider-amber" />
+              </div>
+
+              <div class="w-16">
+                <div class="flex justify-between text-[9px] font-mono text-slate-400">
+                  <span>P.DEC</span>
+                  <span id="val-kick-decay" class="text-accentAmber">36ms</span>
+                </div>
+                <input id="input-kick-decay" type="range" min="15" max="80" step="1" value="36" class="w-full slider-amber" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual-Trace Phase Oscilloscope & Correlation Meter -->
+          <div class="bg-[#07080c] border border-borderSubtle rounded-xl p-1.5 flex items-center gap-2.5 flex-1 lg:flex-initial">
+            <div class="relative w-44 sm:w-52 h-11 rounded-lg overflow-hidden bg-[#06070a] border border-borderSubtle/70">
+              <canvas id="canvas-scope" class="w-full h-full block"></canvas>
+              <div class="absolute top-1 left-1.5 flex items-center gap-2 text-[8px] font-mono pointer-events-none">
+                <span class="text-accentCyan font-bold">● BASS</span>
+                <span class="text-accentAmber font-bold">● KICK</span>
+              </div>
+            </div>
+
+            <div class="pr-1.5 text-right min-w-[66px]">
+              <div class="text-[9px] font-mono text-slate-400">PHASE CORR</div>
+              <div id="val-phase-corr" class="text-xs font-mono font-extrabold text-accentEmerald">+1.00</div>
+              <button id="btn-scope-mode" class="mt-0.5 px-1.5 py-0.2 rounded bg-panel border border-borderSubtle text-[9px] font-mono text-slate-300 hover:text-white cursor-pointer" title="Toggle Dual Trace vs Summed Waveform">
+                DUAL
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB NAVIGATION BAR -->
+      <div class="mt-3 pt-3 border-t border-borderSubtle flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button id="tab-sequencer" class="px-4 py-1.5 rounded-xl font-mono text-xs font-extrabold bg-accentCyan text-black led-cyan transition cursor-pointer">
+            01 · STEP SEQUENCER
+          </button>
+          <button id="tab-sound" class="px-4 py-1.5 rounded-xl font-mono text-xs font-bold bg-panel text-slate-400 hover:text-white border border-borderSubtle transition cursor-pointer">
+            02 · SOUND DESIGN & PHASE
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 text-[11px] font-mono text-slate-400">
+          <span>STEP: <strong id="hud-step" class="text-white">--</strong>/16</span>
+          <span>16TH: <strong id="hud-step-ms" class="text-accentCyan">105.6 ms</strong></span>
+          <span class="hidden sm:inline">SHORTCUTS: <kbd class="px-1.5 py-0.5 bg-panel border border-borderSubtle rounded text-[10px]">SPACE</kbd> PLAY · <kbd class="px-1.5 py-0.5 bg-panel border border-borderSubtle rounded text-[10px]">K</kbd> KICK</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: STEP SEQUENCER VIEW                                          -->
+    <!-- =================================================================== -->
+    <main id="view-sequencer" class="flex-1 flex flex-col gap-3.5">
+
+      <!-- Sequence Preset & Utility Bar -->
+      <div class="bg-chassis border border-borderSubtle rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-accentCyan"></span>
+            <span class="text-xs font-mono font-bold uppercase text-slate-300">Sequence:</span>
+          </div>
+          <select id="select-seq-preset" class="bg-panel text-white font-mono text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-borderSubtle focus:outline-none focus:border-accentCyan min-w-[195px] cursor-pointer"></select>
+          <button id="btn-seq-save" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-accentCyan/15 text-accentCyan border border-accentCyan/40 hover:bg-accentCyan hover:text-black transition cursor-pointer">SAVE</button>
+          <button id="btn-seq-save-as" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-200 hover:border-accentCyan border border-borderSubtle transition cursor-pointer">SAVE AS</button>
+          <button id="btn-seq-delete" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-400 hover:bg-accentRose/20 hover:text-accentRose border border-borderSubtle disabled:opacity-35 disabled:pointer-events-none transition cursor-pointer">DEL</button>
+          <button id="btn-seq-export-json" class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-semibold bg-panel text-slate-300 hover:text-white border border-borderSubtle transition cursor-pointer">EXPORT .JSON</button>
+          <button id="btn-seq-import-json" class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-semibold bg-panel text-slate-300 hover:text-white border border-borderSubtle transition cursor-pointer">IMPORT .JSON</button>
+          <input id="input-seq-import-file" type="file" accept=".json,application/json" class="hidden" />
+        </div>
+
+        <!-- Quick Pattern Utilities -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button id="btn-shift-left" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-300 hover:text-white border border-borderSubtle transition cursor-pointer" title="Shift pattern 1 step left">◀ SHIFT</button>
+          <button id="btn-shift-right" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-300 hover:text-white border border-borderSubtle transition cursor-pointer" title="Shift pattern 1 step right">SHIFT ▶</button>
+          <button id="btn-clear-pattern" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-300 hover:bg-accentRose/20 hover:text-accentRose border border-borderSubtle transition cursor-pointer">CLEAR</button>
+          <button id="btn-rand-pattern" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-accentAmber hover:bg-accentAmber hover:text-black border border-accentAmber/40 transition cursor-pointer">RANDOMIZE GROOVE</button>
+        </div>
+      </div>
+
+      <!-- 16-Step Matrix Grid (Grouped into 4 Beats of 4 16th-Notes) -->
+      <div id="sequencer-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 flex-1">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: SOUND DESIGN & PHASE VIEW                                    -->
+    <!-- =================================================================== -->
+    <section id="view-sound" class="hidden flex-1 flex flex-col gap-3.5">
+
+      <!-- Voice Patch Save / Load Bar -->
+      <div class="bg-chassis border border-borderSubtle rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-accentEmerald"></span>
+            <span class="text-xs font-mono font-bold uppercase text-slate-300">Voice Patch:</span>
+          </div>
+          <select id="select-voice-preset" class="bg-panel text-white font-mono text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-borderSubtle focus:outline-none focus:border-accentEmerald min-w-[195px] cursor-pointer"></select>
+          <button id="btn-voice-save" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-accentEmerald/15 text-accentEmerald border border-accentEmerald/40 hover:bg-accentEmerald hover:text-black transition cursor-pointer">SAVE</button>
+          <button id="btn-voice-save-as" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-200 hover:border-accentEmerald border border-borderSubtle transition cursor-pointer">SAVE AS</button>
+          <button id="btn-voice-delete" class="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-panel text-slate-400 hover:bg-accentRose/20 hover:text-accentRose border border-borderSubtle disabled:opacity-35 disabled:pointer-events-none transition cursor-pointer">DEL</button>
+          <button id="btn-voice-export-json" class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-semibold bg-panel text-slate-300 hover:text-white border border-borderSubtle transition cursor-pointer">EXPORT .JSON</button>
+          <button id="btn-voice-import-json" class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-semibold bg-panel text-slate-300 hover:text-white border border-borderSubtle transition cursor-pointer">IMPORT .JSON</button>
+          <input id="input-voice-import-file" type="file" accept=".json,application/json" class="hidden" />
+        </div>
+
+        <div class="hidden xl:block text-[11px] font-mono text-slate-400">
+          PATH: <span class="text-accentCyan">OSC/FAT + SUB → 24dB LPF → VCA → SAT/EQ → SC DUCK → PHASE/DELAY</span>
+        </div>
+      </div>
+
+      <!-- 6 MODULAR HARDWARE PANELS (2-Column Grid on Desktop) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+
+        <!-- =============================================================== -->
+        <!-- MODULE 01: OSCILLATOR & SUB                                     -->
+        <!-- =============================================================== -->
+        <div class="bg-chassis border border-borderSubtle rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-accentCyan/15 text-accentCyan font-mono text-[11px] font-bold">01</span>
+              <h2 class="text-xs font-mono font-extrabold uppercase tracking-wider text-white">Oscillator & Sub-Octave</h2>
+            </div>
+            <button id="btn-phase-retrig" class="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-accentEmerald/15 text-accentEmerald border border-accentEmerald/40 cursor-pointer">
+              PHASE RETRIG: ON
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Waveform Selector -->
+            <div>
+              <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                <span>CORE WAVEFORM</span>
+                <span id="val-wave-label" class="text-accentCyan font-bold">SAWTOOTH</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 bg-panel p-1 rounded-xl border border-borderSubtle">
+                <button data-wave="sawtooth" class="wave-btn py-1.5 rounded-lg font-mono text-xs font-bold bg-accentCyan text-black shadow cursor-pointer">SAW</button>
+                <button data-wave="square" class="wave-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer">SQR</button>
+                <button data-wave="fatsawtooth" class="wave-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer">FAT</button>
+              </div>
+            </div>
+
+            <!-- FAT Unison Spread -->
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">FAT UNISON SPREAD (3 VOICES)</span>
+                <span id="val-fat-spread" class="text-slate-400 font-bold">18 cents</span>
+              </div>
+              <input id="input-fat-spread" type="range" min="2" max="60" step="1" value="18" disabled class="w-full" />
+            </div>
+
+            <!-- Sub-Octave Sine Level -->
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">SUB-OCTAVE SINE LEVEL (-1 OCT)</span>
+                <span id="val-sub-mix" class="text-accentCyan font-bold">32%</span>
+              </div>
+              <input id="input-sub-mix" type="range" min="0" max="100" step="1" value="32" class="w-full" />
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- MODULE 02: 24dB/OCT LOWPASS FILTER & ENV                        -->
+        <!-- =============================================================== -->
+        <div class="bg-chassis border border-borderSubtle rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-accentCyan/15 text-accentCyan font-mono text-[11px] font-bold">02</span>
+              <h2 class="text-xs font-mono font-extrabold uppercase tracking-wider text-white">24dB/Oct Lowpass Filter & Env</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-400">RESONANT LADDER</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">CUTOFF FREQ</span>
+                <span id="val-cutoff" class="text-accentCyan font-bold">135 Hz</span>
+              </div>
+              <input id="input-cutoff" type="range" min="40" max="4000" step="1" value="135" class="w-full" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">RESONANCE (Q)</span>
+                <span id="val-res" class="text-accentCyan font-bold">4.5</span>
+              </div>
+              <input id="input-res" type="range" min="0.5" max="15" step="0.1" value="4.5" class="w-full" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">FILTER ENV AMT</span>
+                <span id="val-env-amt" class="text-accentCyan font-bold">2400 Hz</span>
+              </div>
+              <input id="input-env-amt" type="range" min="0" max="4800" step="10" value="2400" class="w-full" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">FILTER ENV DECAY</span>
+                <span id="val-flt-decay" class="text-accentCyan font-bold">82 ms</span>
+              </div>
+              <input id="input-flt-decay" type="range" min="15" max="400" step="1" value="82" class="w-full" />
+            </div>
+
+            <div class="sm:col-span-2">
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">ACCENT FILTER BOOST</span>
+                <span id="val-accent-boost" class="text-accentAmber font-bold">35%</span>
+              </div>
+              <input id="input-accent-boost" type="range" min="0" max="100" step="1" value="35" class="w-full slider-amber" />
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- MODULE 03: VCA ENVELOPE & CONTOUR                               -->
+        <!-- =============================================================== -->
+        <div class="bg-chassis border border-borderSubtle rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-accentEmerald/15 text-accentEmerald font-mono text-[11px] font-bold">03</span>
+              <h2 class="text-xs font-mono font-extrabold uppercase tracking-wider text-white">VCA Envelope & Contour</h2>
+            </div>
+            <span class="text-[10px] font-mono text-accentEmerald">ADSR CONTOUR</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-7 grid grid-cols-2 gap-x-3 gap-y-2.5">
+              <div>
+                <div class="flex justify-between text-[11px] font-mono mb-1">
+                  <span class="text-slate-400">ATTACK</span>
+                  <span id="val-amp-atk" class="text-accentEmerald font-bold">2 ms</span>
+                </div>
+                <input id="input-amp-atk" type="range" min="1" max="30" step="1" value="2" class="w-full slider-emerald" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] font-mono mb-1">
+                  <span class="text-slate-400">DECAY</span>
+                  <span id="val-amp-dec" class="text-accentEmerald font-bold">125 ms</span>
+                </div>
+                <input id="input-amp-dec" type="range" min="20" max="350" step="1" value="125" class="w-full slider-emerald" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] font-mono mb-1">
+                  <span class="text-slate-400">SUSTAIN</span>
+                  <span id="val-amp-sus" class="text-accentEmerald font-bold">20%</span>
+                </div>
+                <input id="input-amp-sus" type="range" min="0" max="100" step="1" value="20" class="w-full slider-emerald" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] font-mono mb-1">
+                  <span class="text-slate-400">RELEASE</span>
+                  <span id="val-amp-rel" class="text-accentEmerald font-bold">22 ms</span>
+                </div>
+                <input id="input-amp-rel" type="range" min="5" max="200" step="1" value="22" class="w-full slider-emerald" />
+              </div>
+            </div>
+
+            <!-- Live VCA Contour Preview -->
+            <div class="sm:col-span-5 bg-[#07080c] border border-borderSubtle rounded-xl p-2 h-24">
+              <canvas id="canvas-vca-env" class="w-full h-full block"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- MODULE 04: DRIVE & SUB-CLEAN EQ                                 -->
+        <!-- =============================================================== -->
+        <div class="bg-chassis border border-borderSubtle rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-accentAmber/15 text-accentAmber font-mono text-[11px] font-bold">04</span>
+              <h2 class="text-xs font-mono font-extrabold uppercase tracking-wider text-white">Drive & Sub-Clean EQ</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-400">SATURATION + 300HZ SCOOP</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">HARMONIC DRIVE</span>
+                <span id="val-drive" class="text-accentAmber font-bold">18%</span>
+              </div>
+              <input id="input-drive" type="range" min="0" max="100" step="1" value="18" class="w-full slider-amber" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">SUB-CLEAN HPF</span>
+                <span id="val-hpf" class="text-accentCyan font-bold">30 Hz</span>
+              </div>
+              <input id="input-hpf" type="range" min="20" max="80" step="1" value="30" class="w-full" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">300 HZ MUD SCOOP</span>
+                <span id="val-mid-cut" class="text-accentRose font-bold">-3.5 dB</span>
+              </div>
+              <input id="input-mid-cut" type="range" min="-12" max="0" step="0.5" value="-3.5" class="w-full slider-rose" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">MASTER BASS GAIN</span>
+                <span id="val-bass-vol" class="text-accentEmerald font-bold">-1.5 dB</span>
+              </div>
+              <input id="input-bass-vol" type="range" min="-24" max="6" step="0.5" value="-1.5" class="w-full slider-emerald" />
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- MODULE 05: PRECISION SIDECHAIN DUCKER                           -->
+        <!-- =============================================================== -->
+        <div class="bg-chassis border border-borderSubtle rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-accentRose/15 text-accentRose font-mono text-[11px] font-bold">05</span>
+              <h2 class="text-xs font-mono font-extrabold uppercase tracking-wider text-white">Precision Sidechain Ducker</h2>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="btn-sc-curve" class="px-2 py-1 rounded-lg font-mono text-[10px] font-bold bg-panel text-accentCyan border border-borderSubtle cursor-pointer" title="Toggle Exponential vs Linear Release Curve">
+                EXP
+              </button>
+              <button id="btn-sc-toggle" class="px-2.5 py-1 rounded-lg font-mono text-[10px] font-extrabold bg-accentRose text-white led-rose cursor-pointer">
+                ACTIVE
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-7 space-y-2.5">
+              <div>
+                <div class="flex justify-between text-[11px] font-mono mb-1">
+                  <span class="text-slate-400">DUCKING DEPTH</span>
+                  <span id="val-sc-depth" class="text-accentRose font-bold">85% (-16.5 dB)</span>
+                </div>
+                <input id="input-sc-depth" type="range" min="0" max="100" step="1" value="85" class="w-full slider-rose" />
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <div class="flex justify-between text-[10px] font-mono mb-1">
+                    <span class="text-slate-400">ATK</span>
+                    <span id="val-sc-atk" class="text-white font-bold">2.0ms</span>
+                  </div>
+                  <input id="input-sc-atk" type="range" min="0.5" max="50.0" step="0.5" value="2.0" class="w-full slider-rose" />
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[10px] font-mono mb-1">
+                    <span class="text-slate-400">HOLD</span>
+                    <span id="val-sc-hold" class="text-white font-bold">15ms</span>
+                  </div>
+                  <input id="input-sc-hold" type="range" min="0" max="100" step="1" value="15" class="w-full slider-rose" />
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[10px] font-mono mb-1">
+                    <span class="text-slate-400">REL</span>
+                    <span id="val-sc-rel" class="text-white font-bold">75ms</span>
+                  </div>
+                  <input id="input-sc-rel" type="range" min="10" max="250" step="1" value="75" class="w-full slider-rose" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 1-Beat Duck Contour Canvas with 16th-Note Markers -->
+            <div class="sm:col-span-5 bg-[#07080c] border border-borderSubtle rounded-xl p-2 h-24 relative">
+              <canvas id="canvas-sc-curve" class="w-full h-full block"></canvas>
+              <div class="absolute top-1 right-2 text-[8px] font-mono text-slate-400 pointer-events-none">1-BEAT DUCK</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- MODULE 06: KICK-TO-BASS PHASE ALIGNMENT                         -->
+        <!-- =============================================================== -->
+        <div class="bg-chassis border border-borderSubtle rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-accentCyan/15 text-accentCyan font-mono text-[11px] font-bold">06</span>
+              <h2 class="text-xs font-mono font-extrabold uppercase tracking-wider text-white">Kick-to-Bass Phase Alignment</h2>
+            </div>
+            <button id="btn-phase-invert" class="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-panel text-slate-400 border border-borderSubtle hover:text-white cursor-pointer" title="Invert Bass Polarity 180°">
+              Ø POLARITY: 0°
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Oscillator Start Phase -->
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">OSCILLATOR START PHASE</span>
+                <span id="val-start-phase" class="text-accentCyan font-bold">0°</span>
+              </div>
+              <input id="input-start-phase" type="range" min="0" max="360" step="1" value="0" class="w-full" />
+            </div>
+
+            <!-- Sub-Millisecond Bass Micro-Delay -->
+            <div>
+              <div class="flex justify-between text-[11px] font-mono mb-1">
+                <span class="text-slate-400">BASS MICRO-DELAY (TIME SHIFT)</span>
+                <span id="val-micro-delay" class="text-accentAmber font-bold">0.00 ms (Δ 0°)</span>
+              </div>
+              <input id="input-micro-delay" type="range" min="0" max="20" step="0.05" value="0" class="w-full slider-amber" />
+            </div>
+
+            <!-- Live Wavelength & Phase Readout Strip -->
+            <div class="bg-panel border border-borderSubtle rounded-xl px-3 py-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
+              <span>ROOT PERIOD: <strong id="hud-root-period" class="text-white">22.91 ms</strong></span>
+              <span>TOTAL PHASE OFFSET: <strong id="hud-total-phase" class="text-accentCyan">0°</strong></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 1: OFFLINE WAV RENDER & EXPORT                                -->
+  <!-- =================================================================== -->
+  <div id="modal-wav" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-chassis border border-borderSubtle rounded-2xl max-w-md w-full p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-borderSubtle pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-accentCyan led-cyan"></span>
+          <h3 class="text-sm font-mono font-bold uppercase tracking-wider text-white">Offline WAV Loop Export</h3>
+        </div>
+        <button id="btn-close-wav" class="text-slate-400 hover:text-white font-mono text-xs px-2 py-1 rounded-lg bg-panel border border-borderSubtle cursor-pointer">ESC</button>
+      </div>
+
+      <div class="space-y-3.5">
+        <!-- Loop Length -->
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1.5">Loop Length (44.1 kHz / 16-Bit Stereo PCM)</label>
+          <div class="grid grid-cols-4 gap-1.5 bg-panel p-1 rounded-xl border border-borderSubtle">
+            <button data-bars="1" class="wav-bars-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer">1 BAR</button>
+            <button data-bars="2" class="wav-bars-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer">2 BARS</button>
+            <button data-bars="4" class="wav-bars-btn py-1.5 rounded-lg font-mono text-xs font-bold bg-accentCyan text-black shadow cursor-pointer">4 BARS</button>
+            <button data-bars="8" class="wav-bars-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer">8 BARS</button>
+          </div>
+        </div>
+
+        <!-- Stem Mode -->
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1.5">Stem Mode</label>
+          <div class="grid grid-cols-2 gap-1.5 bg-panel p-1 rounded-xl border border-borderSubtle">
+            <button data-stem="bass" class="wav-stem-btn py-2 rounded-lg font-mono text-xs font-bold bg-accentCyan text-black shadow cursor-pointer">BASS ONLY (DRY STEM)</button>
+            <button data-stem="mix" class="wav-stem-btn py-2 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer">BASS + 4x4 KICK</button>
+          </div>
+        </div>
+
+        <!-- Include 1-Beat Release Tail Checkbox -->
+        <label class="flex items-center justify-between bg-panel px-3 py-2.5 rounded-xl border border-borderSubtle cursor-pointer">
+          <div>
+            <div class="text-xs font-bold text-white">Include 1-Beat Release Tail</div>
+            <div class="text-[10px] font-mono text-slate-400">Unchecked = Exact bar length for seamless looping</div>
+          </div>
+          <input id="chk-wav-tail" type="checkbox" class="w-4 h-4 accent-cyan-400 cursor-pointer" />
+        </label>
+
+        <!-- Summary Specs -->
+        <div class="bg-[#08090e] border border-borderSubtle rounded-xl p-3 text-[11px] font-mono space-y-1">
+          <div class="flex justify-between">
+            <span class="text-slate-400">TEMPO & KEY:</span>
+            <span id="wav-spec-tempo" class="text-accentCyan font-semibold">142 BPM · F1</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">DURATION:</span>
+            <span id="wav-spec-duration" class="text-white font-semibold">6.76 sec (4 Bars)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">OUTPUT FILE:</span>
+            <span id="wav-spec-filename" class="text-accentEmerald font-semibold truncate max-w-[210px]">psy-bass-rolling-142bpm.wav</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="wav-progress-wrap" class="hidden space-y-1.5">
+          <div class="flex justify-between text-[11px] font-mono text-accentCyan">
+            <span>Rendering audio buffer offline...</span>
+            <span id="wav-progress-pct">50%</span>
+          </div>
+          <div class="w-full h-2 bg-panel rounded-full overflow-hidden border border-borderSubtle">
+            <div id="wav-progress-bar" class="h-full bg-accentCyan transition-all duration-150" style="width: 50%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-borderSubtle">
+        <button id="btn-cancel-wav" class="px-4 py-2 rounded-xl font-mono text-xs font-bold bg-panel text-slate-300 hover:text-white border border-borderSubtle cursor-pointer">CANCEL</button>
+        <button id="btn-render-wav" class="flex items-center gap-2 px-5 py-2 rounded-xl font-mono text-xs font-extrabold bg-accentEmerald text-black hover:brightness-110 active:scale-95 transition-all led-emerald cursor-pointer">
+          <span>RENDER & DOWNLOAD .WAV</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 2: SAVE PRESET NAME DIALOG                                    -->
+  <!-- =================================================================== -->
+  <div id="modal-save-name" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-chassis border border-borderSubtle rounded-2xl max-w-sm w-full p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+        <h3 id="save-modal-title" class="text-xs font-mono font-bold uppercase tracking-wider text-accentCyan">Save Sequence Preset</h3>
+        <button id="btn-close-save-modal" class="text-slate-400 hover:text-white font-mono text-xs px-2 py-0.5 rounded bg-panel border border-borderSubtle cursor-pointer">ESC</button>
+      </div>
+      <div>
+        <label for="input-preset-name" class="block text-xs font-mono text-slate-400 mb-1.5">Preset Name</label>
+        <input id="input-preset-name" type="text" maxlength="40" placeholder="e.g. Goa Rolling 145" class="w-full bg-panel text-white font-mono text-xs font-semibold rounded-xl px-3 py-2.5 border border-borderSubtle focus:outline-none focus:border-accentCyan" />
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <button id="btn-cancel-save-modal" class="px-3.5 py-2 rounded-xl font-mono text-xs font-bold bg-panel text-slate-300 hover:text-white border border-borderSubtle cursor-pointer">CANCEL</button>
+        <button id="btn-confirm-save-modal" class="px-4 py-2 rounded-xl font-mono text-xs font-extrabold bg-accentCyan text-black hover:brightness-110 cursor-pointer">SAVE PRESET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HARDWARE STATUS TOAST -->
+  <div id="studio-toast" class="hidden fixed bottom-4 right-4 z-50 bg-chassis border border-accentCyan/50 text-white font-mono text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2">
+    <span class="w-2 h-2 rounded-full bg-accentEmerald"></span>
+    <span id="studio-toast-msg">Saved preset</span>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- APPLICATION LOGIC & TONE.JS SYNTHESIS ENGINE                        -->
+  <!-- =================================================================== -->
+  <script>
+    // --- MUSICAL CONSTANTS & HELPERS ---
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    function getMidiNote(rootKey, octave, semitoneOffset = 0) {
+      const rootIdx = NOTE_NAMES.indexOf(rootKey);
+      return (octave + 1) * 12 + (rootIdx >= 0 ? rootIdx : 5) + semitoneOffset;
+    }
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function freqToNoteLabel(midi) {
+      const name = NOTE_NAMES[((midi % 12) + 12) % 12];
+      const oct = Math.floor(midi / 12) - 1;
+      return `${name}${oct}`;
+    }
+
+    // --- FACTORY PRESETS & STORAGE KEYS ---
+    const STORAGE_KEYS = {
+      SEQUENCES: 'psy_bass_mk3_sequences',
+      VOICES: 'psy_bass_mk3_voices'
+    };
+
+    const FACTORY_SEQUENCES = [
+      {
+        id: 'factory_seq_rolling',
+        name: 'Rolling 16th',
+        factory: true,
+        bpm: 142,
+        rootKey: 'F',
+        octave: 1,
+        steps: Array.from({ length: 16 }, (_, i) => ({
+          active: i % 4 !== 0,
+          accent: i % 4 === 2,
+          semitone: 0,
+          gate: 0.72
+        }))
+      },
+      {
+        id: 'factory_seq_offbeat',
+        name: 'Offbeat Classic',
+        factory: true,
+        bpm: 138,
+        rootKey: 'F',
+        octave: 1,
+        steps: Array.from({ length: 16 }, (_, i) => ({
+          active: i % 4 === 2,
+          accent: i % 4 === 2,
+          semitone: 0,
+          gate: 0.85
+        }))
+      },
+      {
+        id: 'factory_seq_gallop',
+        name: 'Gallop',
+        factory: true,
+        bpm: 144,
+        rootKey: 'G',
+        octave: 1,
+        steps: Array.from({ length: 16 }, (_, i) => ({
+          active: i % 4 === 2 || i % 4 === 3,
+          accent: i % 4 === 2,
+          semitone: 0,
+          gate: 0.68
+        }))
+      },
+      {
+        id: 'factory_seq_acid',
+        name: 'Syncopated Acid',
+        factory: true,
+        bpm: 145,
+        rootKey: 'F#',
+        octave: 1,
+        steps: [
+          { active: false, accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: true,  semitone: 12, gate: 0.65 },
+          { active: true,  accent: false, semitone: 0,  gate: 0.75 },
+          { active: false, accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: true,  semitone: 7,  gate: 0.65 },
+          { active: true,  accent: false, semitone: 0,  gate: 0.75 },
+          { active: false, accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: true,  semitone: 12, gate: 0.65 },
+          { active: true,  accent: false, semitone: 3,  gate: 0.75 },
+          { active: false, accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: false, semitone: 0,  gate: 0.70 },
+          { active: true,  accent: true,  semitone: 10, gate: 0.75 },
+          { active: true,  accent: true,  semitone: 12, gate: 0.85 }
+        ]
+      }
+    ];
+
+    const FACTORY_VOICES = [
+      {
+        id: 'factory_voice_classic',
+        name: 'Classic Rolling Saw',
+        factory: true,
+        params: {
+          waveform: 'sawtooth', fatSpread: 18, subMix: 32, phaseRetrig: true,
+          cutoff: 135, resonance: 4.5, envAmt: 2400, fltDecay: 82, accentBoost: 35,
+          ampAttack: 2, ampDecay: 125, ampSustain: 0.20, ampRelease: 22,
+          drive: 18, hpf: 30, midCut: -3.5, bassVol: -1.5,
+          scEnabled: true, scDepth: 85, scAttack: 2.0, scHold: 15, scRelease: 75, scCurve: 'exponential',
+          startPhase: 0, microDelay: 0.0, phaseInvert: false
+        }
+      },
+      {
+        id: 'factory_voice_fullon',
+        name: 'Full-On Punch',
+        factory: true,
+        params: {
+          waveform: 'fatsawtooth', fatSpread: 22, subMix: 42, phaseRetrig: true,
+          cutoff: 110, resonance: 2.8, envAmt: 1650, fltDecay: 115, accentBoost: 25,
+          ampAttack: 4, ampDecay: 165, ampSustain: 0.35, ampRelease: 32,
+          drive: 14, hpf: 28, midCut: -2.5, bassVol: -1.5,
+          scEnabled: true, scDepth: 90, scAttack: 1.5, scHold: 18, scRelease: 80, scCurve: 'exponential',
+          startPhase: 0, microDelay: 0.0, phaseInvert: false
+        }
+      },
+      {
+        id: 'factory_voice_forest',
+        name: 'Dark Forest Sub',
+        factory: true,
+        params: {
+          waveform: 'square', fatSpread: 18, subMix: 45, phaseRetrig: true,
+          cutoff: 95, resonance: 6.8, envAmt: 2850, fltDecay: 65, accentBoost: 45,
+          ampAttack: 2, ampDecay: 105, ampSustain: 0.15, ampRelease: 18,
+          drive: 34, hpf: 34, midCut: -5.0, bassVol: -1.5,
+          scEnabled: true, scDepth: 88, scAttack: 2.0, scHold: 12, scRelease: 65, scCurve: 'exponential',
+          startPhase: 0, microDelay: 0.0, phaseInvert: false
+        }
+      },
+      {
+        id: 'factory_voice_acid',
+        name: 'Acid Squelch',
+        factory: true,
+        params: {
+          waveform: 'sawtooth', fatSpread: 18, subMix: 16, phaseRetrig: true,
+          cutoff: 220, resonance: 10.5, envAmt: 3900, fltDecay: 110, accentBoost: 55,
+          ampAttack: 2, ampDecay: 145, ampSustain: 0.20, ampRelease: 24,
+          drive: 28, hpf: 36, midCut: -1.5, bassVol: -1.5,
+          scEnabled: true, scDepth: 80, scAttack: 2.5, scHold: 10, scRelease: 70, scCurve: 'exponential',
+          startPhase: 0, microDelay: 0.0, phaseInvert: false
+        }
+      }
+    ];
+
+    // --- CENTRAL STATE ---
+    const state = {
+      isPlaying: false,
+      audioInitialized: false,
+      bpm: 142,
+      rootKey: 'F',
+      octave: 1,
+      currentStep: -1,
+      scopeMode: 'dual', // 'dual' | 'sum'
+
+      activeSeqId: 'factory_seq_rolling',
+      activeVoiceId: 'factory_voice_classic',
+      userSequences: [],
+      userVoices: [],
+      saveDialogTarget: null,
+
+      wavOptions: {
+        bars: 4,
+        stem: 'bass', // 'bass' | 'mix'
+        includeTail: false
+      },
+
+      // 4x4 Reference Kick
+      kickEnabled: true,
+      kickVol: -2.0,
+      kickPunch: 65,
+      kickDecay: 36, // ms
+
+      // 16-Step Sequencer
+      steps: Array.from({ length: 16 }, (_, i) => ({
+        active: i % 4 !== 0,
+        accent: i % 4 === 2,
+        semitone: 0,
+        gate: 0.72
+      })),
+
+      // Synth & Phase Parameters (Modules 01-06)
+      synth: {
+        waveform: 'sawtooth',   // 'sawtooth' | 'square' | 'fatsawtooth'
+        fatSpread: 18,          // 2..60 cents
+        subMix: 32,             // 0..100%
+        phaseRetrig: true,
+
+        cutoff: 135,            // 40..4000 Hz
+        resonance: 4.5,         // 0.5..15 Q
+        envAmt: 2400,           // 0..4800 Hz
+        fltDecay: 82,           // 15..400 ms
+        accentBoost: 35,        // 0..100%
+
+        ampAttack: 2,           // 1..30 ms
+        ampDecay: 125,          // 20..350 ms
+        ampSustain: 0.20,       // 0..1
+        ampRelease: 22,         // 5..200 ms
+
+        drive: 18,              // 0..100%
+        hpf: 30,                // 20..80 Hz
+        midCut: -3.5,           // -12..0 dB
+        bassVol: -1.5,          // -24..6 dB
+
+        scEnabled: true,
+        scDepth: 85,            // 0..100%
+        scAttack: 2.0,          // 0.5..50.0 ms
+        scHold: 15,             // 0..100 ms
+        scRelease: 75,          // 10..250 ms
+        scCurve: 'exponential', // 'exponential' | 'linear'
+
+        startPhase: 0,          // 0..360 deg
+        microDelay: 0.0,        // 0.00..20.00 ms
+        phaseInvert: false
+      }
+    };
+
+    // --- TONE.JS AUDIO ENGINE NODES ---
+    const audio = {
+      stdOsc: null,
+      fatOsc: null,
+      stdOscGain: null,
+      fatOscGain: null,
+      subOsc: null,
+      subGain: null,
+      filter: null,
+      filterEnv: null,
+      ampEnv: null,
+      distortion: null,
+      hpf: null,
+      midEQ: null,
+      sidechainGain: null,
+      polarityGain: null,
+      microDelay: null,
+      bassVol: null,
+      bassAnalyser: null,
+
+      kickSynth: null,
+      kickClick: null,
+      kickClickGain: null,
+      kickVol: null,
+      kickAnalyser: null,
+
+      masterLimiter: null,
+      sequence: null,
+      lastScScheduleEnd: 0
+    };
+
+    function hzToOctaves(baseHz, envHz) {
+      const safeBase = Math.max(20, baseHz);
+      const targetHz = safeBase + Math.max(0, envHz);
+      return Math.max(0.01, Math.min(8, Math.log2(targetHz / safeBase)));
+    }
+
+    async function initAudioEngine() {
+      if (state.audioInitialized) return;
+      await Tone.start();
+
+      audio.masterLimiter = new Tone.Limiter(-1.0).toDestination();
+
+      // Separate Standard Oscillator & FatOscillator routed via gain crossfade
+      const isFat = state.synth.waveform === 'fatsawtooth';
+      audio.stdOsc = new Tone.Oscillator({
+        type: isFat ? 'sawtooth' : state.synth.waveform,
+        frequency: 43.65,
+        phase: state.synth.startPhase
+      }).start();
+
+      audio.fatOsc = new Tone.FatOscillator({
+        type: 'sawtooth',
+        frequency: 43.65,
+        count: 3,
+        spread: state.synth.fatSpread,
+        phase: state.synth.startPhase
+      }).start();
+
+      audio.stdOscGain = new Tone.Gain(isFat ? 0 : 1);
+      audio.fatOscGain = new Tone.Gain(isFat ? 1 : 0);
+
+      audio.subOsc = new Tone.Oscillator({
+        type: 'sine',
+        frequency: 21.825,
+        phase: state.synth.startPhase
+      }).start();
+      audio.subGain = new Tone.Gain((state.synth.subMix / 100) * 0.6);
+
+      audio.filter = new Tone.Filter({
+        type: 'lowpass',
+        frequency: state.synth.cutoff,
+        rolloff: -24,
+        Q: state.synth.resonance
+      });
+
+      audio.filterEnv = new Tone.FrequencyEnvelope({
+        attack: 0.002,
+        decay: Math.max(0.005, state.synth.fltDecay / 1000),
+        sustain: 0.0,
+        release: 0.025,
+        baseFrequency: state.synth.cutoff,
+        octaves: hzToOctaves(state.synth.cutoff, state.synth.envAmt),
+        exponent: 2.6
+      });
+      audio.filterEnv.connect(audio.filter.frequency);
+
+      audio.ampEnv = new Tone.AmplitudeEnvelope({
+        attack: Math.max(0.001, state.synth.ampAttack / 1000),
+        decay: Math.max(0.01, state.synth.ampDecay / 1000),
+        sustain: state.synth.ampSustain,
+        release: Math.max(0.005, state.synth.ampRelease / 1000)
+      });
+
+      audio.distortion = new Tone.Distortion({
+        distortion: (state.synth.drive / 100) * 0.45,
+        oversample: '2x'
+      });
+
+      audio.hpf = new Tone.Filter({
+        type: 'highpass',
+        frequency: state.synth.hpf,
+        rolloff: -12
+      });
+
+      audio.midEQ = new Tone.Filter({
+        type: 'peaking',
+        frequency: 300,
+        Q: 1.6,
+        gain: state.synth.midCut
+      });
+
+      audio.sidechainGain = new Tone.Gain(1.0);
+      audio.polarityGain = new Tone.Gain(state.synth.phaseInvert ? -1 : 1);
+      audio.microDelay = new Tone.Delay({
+        delayTime: Math.min(0.05, Math.max(0, state.synth.microDelay / 1000)),
+        maxDelay: 0.1
+      });
+      audio.bassVol = new Tone.Volume(state.synth.bassVol);
+      audio.bassAnalyser = new Tone.Analyser('waveform', 256);
+
+      // Bass Signal Chain Routing
+      audio.stdOsc.connect(audio.stdOscGain);
+      audio.fatOsc.connect(audio.fatOscGain);
+      audio.stdOscGain.connect(audio.filter);
+      audio.fatOscGain.connect(audio.filter);
+
+      audio.subOsc.connect(audio.subGain);
+      audio.subGain.connect(audio.filter);
+
+      audio.filter.connect(audio.ampEnv);
+      audio.ampEnv.connect(audio.distortion);
+      audio.distortion.connect(audio.hpf);
+      audio.hpf.connect(audio.midEQ);
+      audio.midEQ.connect(audio.sidechainGain);
+      audio.sidechainGain.connect(audio.polarityGain);
+      audio.polarityGain.connect(audio.microDelay);
+      audio.microDelay.connect(audio.bassVol);
+      audio.bassVol.connect(audio.bassAnalyser);
+      audio.bassVol.connect(audio.masterLimiter);
+
+      // 4x4 Reference Psytrance Kick Engine
+      audio.kickVol = new Tone.Volume(state.kickVol);
+      audio.kickAnalyser = new Tone.Analyser('waveform', 256);
+
+      audio.kickSynth = new Tone.MembraneSynth({
+        pitchDecay: Math.max(0.01, state.kickDecay / 1000),
+        octaves: 5.5,
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.001, decay: 0.21, sustain: 0.0, release: 0.04 }
+      }).connect(audio.kickVol);
+
+      audio.kickClick = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.0005, decay: 0.011, sustain: 0, release: 0.004 }
+      });
+      const clickFilter = new Tone.Filter({ type: 'bandpass', frequency: 3600, Q: 2.0 });
+      audio.kickClickGain = new Tone.Gain((state.kickPunch / 100) * 0.4);
+      audio.kickClick.connect(clickFilter);
+      clickFilter.connect(audio.kickClickGain);
+      audio.kickClickGain.connect(audio.kickVol);
+
+      audio.kickVol.connect(audio.kickAnalyser);
+      audio.kickVol.connect(audio.masterLimiter);
+
+      // 16-Step Sequencer Loop
+      Tone.Transport.bpm.value = state.bpm;
+      audio.sequence = new Tone.Sequence((time, stepIdx) => {
+        try {
+          handleStepTrigger(time, stepIdx);
+        } catch (err) {
+          console.error('Step trigger error:', err);
+        }
+      }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], '16n');
+
+      audio.sequence.start(0);
+      state.audioInitialized = true;
+      syncAudioEngineToState();
+    }
+
+    function triggerSidechainDuck(time) {
+      if (!audio.sidechainGain) return;
+      if (!state.synth.scEnabled || state.synth.scDepth <= 0) {
+        audio.sidechainGain.gain.cancelScheduledValues(time);
+        audio.sidechainGain.gain.setValueAtTime(1.0, time);
+        return;
+      }
+
+      const t0 = Math.max(time, audio.lastScScheduleEnd + 0.0001);
+      const depthNorm = Math.min(1, Math.max(0, state.synth.scDepth / 100));
+      const floorGain = Math.max(0.0001, 1 - depthNorm * 0.9999);
+
+      const atkSec = Math.max(0.0005, state.synth.scAttack / 1000);
+      const holdSec = Math.max(0, state.synth.scHold / 1000);
+      const relSec = Math.max(0.01, state.synth.scRelease / 1000);
+
+      const tAttackEnd = t0 + atkSec;
+      const tHoldEnd = tAttackEnd + holdSec;
+      const tReleaseEnd = tHoldEnd + relSec;
+      audio.lastScScheduleEnd = tReleaseEnd;
+
+      const g = audio.sidechainGain.gain;
+      g.cancelScheduledValues(t0);
+      g.setValueAtTime(1.0, t0);
+      g.linearRampToValueAtTime(floorGain, tAttackEnd);
+      g.setValueAtTime(floorGain, tHoldEnd);
+      if (state.synth.scCurve === 'exponential') {
+        g.exponentialRampToValueAtTime(1.0, tReleaseEnd);
+      } else {
+        g.linearRampToValueAtTime(1.0, tReleaseEnd);
+      }
+    }
+
+    function handleStepTrigger(time, stepIdx) {
+      Tone.Draw.schedule(() => {
+        state.currentStep = stepIdx;
+        updatePlayheadUI(stepIdx);
+      }, time);
+
+      // 4x4 Downbeat (Steps 0, 4, 8, 12)
+      if (stepIdx % 4 === 0) {
+        if (state.kickEnabled && audio.kickSynth) {
+          const kickMidi = getMidiNote(state.rootKey, 1, 0);
+          const kickFreq = Math.max(40, Math.min(58, midiToFreq(kickMidi)));
+          audio.kickSynth.triggerAttackRelease(kickFreq, '16n', time, 0.95);
+          if (state.kickPunch > 0 && audio.kickClick) {
+            audio.kickClick.triggerAttackRelease('64n', time, 0.85);
+          }
+        }
+        triggerSidechainDuck(time);
+      }
+
+      // Bass Note Trigger
+      const stepData = state.steps[stepIdx];
+      if (stepData && stepData.active) {
+        const midi = getMidiNote(state.rootKey, state.octave, stepData.semitone);
+        const freq = midiToFreq(midi);
+
+        audio.stdOsc.frequency.setValueAtTime(freq, time);
+        audio.fatOsc.frequency.setValueAtTime(freq, time);
+        audio.subOsc.frequency.setValueAtTime(freq * 0.5, time);
+
+        if (state.synth.phaseRetrig) {
+          audio.stdOsc.phase = state.synth.startPhase;
+          audio.fatOsc.phase = state.synth.startPhase;
+          audio.subOsc.phase = state.synth.startPhase;
+        }
+
+        const boostMult = stepData.accent ? (1 + (state.synth.accentBoost / 100) * 0.65) : 1.0;
+        const velocity = stepData.accent ? 1.0 : 0.84;
+
+        audio.filterEnv.baseFrequency = state.synth.cutoff;
+        audio.filterEnv.octaves = hzToOctaves(state.synth.cutoff, state.synth.envAmt * boostMult);
+
+        const sixteenthSec = 60 / state.bpm / 4;
+        const gateSec = Math.max(0.015, sixteenthSec * stepData.gate);
+
+        audio.filterEnv.triggerAttackRelease(gateSec, time);
+        audio.ampEnv.triggerAttackRelease(gateSec, time, velocity);
+      }
+    }
+
+    function syncAudioEngineToState() {
+      if (!state.audioInitialized) return;
+      const s = state.synth;
+
+      Tone.Transport.bpm.value = state.bpm;
+
+      // Crossfade standard oscillator vs FatOscillator safely
+      const isFat = s.waveform === 'fatsawtooth';
+      if (!isFat) {
+        audio.stdOsc.type = s.waveform;
+      }
+      audio.fatOsc.spread = s.fatSpread;
+      audio.stdOscGain.gain.value = isFat ? 0 : 1;
+      audio.fatOscGain.gain.value = isFat ? 1 : 0;
+
+      audio.subGain.gain.value = (s.subMix / 100) * 0.6;
+
+      audio.filter.frequency.value = s.cutoff;
+      audio.filter.Q.value = s.resonance;
+      audio.filterEnv.baseFrequency = s.cutoff;
+      audio.filterEnv.decay = Math.max(0.005, s.fltDecay / 1000);
+      audio.filterEnv.octaves = hzToOctaves(s.cutoff, s.envAmt);
+
+      audio.ampEnv.attack = Math.max(0.001, s.ampAttack / 1000);
+      audio.ampEnv.decay = Math.max(0.01, s.ampDecay / 1000);
+      audio.ampEnv.sustain = s.ampSustain;
+      audio.ampEnv.release = Math.max(0.005, s.ampRelease / 1000);
+
+      audio.distortion.distortion = (s.drive / 100) * 0.45;
+      audio.hpf.frequency.value = s.hpf;
+      audio.midEQ.gain.value = s.midCut;
+      audio.bassVol.volume.value = s.bassVol;
+
+      if (!s.scEnabled) {
+        audio.sidechainGain.gain.cancelScheduledValues(Tone.now());
+        audio.sidechainGain.gain.setValueAtTime(1.0, Tone.now());
+      }
+
+      audio.polarityGain.gain.value = s.phaseInvert ? -1 : 1;
+      audio.microDelay.delayTime.value = Math.min(0.09, Math.max(0, s.microDelay / 1000));
+
+      audio.kickVol.volume.value = state.kickVol;
+      audio.kickClickGain.gain.value = (state.kickPunch / 100) * 0.4;
+      audio.kickSynth.pitchDecay = Math.max(0.01, state.kickDecay / 1000);
+    }
+
+    // --- UI RENDERING & VISUALIZERS ---
+    function renderSequencerGrid() {
+      const grid = document.getElementById('sequencer-grid');
+      grid.innerHTML = '';
+
+      for (let beat = 0; beat < 4; beat++) {
+        const beatCard = document.createElement('div');
+        beatCard.className = 'bg-chassis border border-borderSubtle rounded-2xl p-3 flex flex-col gap-2.5';
+
+        const header = document.createElement('div');
+        header.className = 'flex items-center justify-between border-b border-borderSubtle pb-2';
+        header.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-panel border border-borderSubtle font-mono text-[11px] font-bold text-white">BEAT ${beat + 1}</span>
+            <span class="px-1.5 py-0.5 rounded bg-accentAmber/15 border border-accentAmber/40 font-mono text-[9px] font-extrabold text-accentAmber">4x4 KICK ON .1</span>
+          </div>
+          <span class="font-mono text-[10px] text-slate-400">STEPS ${beat * 4 + 1}–${beat * 4 + 4}</span>
+        `;
+        beatCard.appendChild(header);
+
+        const stepsRow = document.createElement('div');
+        stepsRow.className = 'grid grid-cols-4 gap-2 flex-1';
+
+        for (let sub = 0; sub < 4; sub++) {
+          const stepIdx = beat * 4 + sub;
+          const step = state.steps[stepIdx];
+          const isDownbeat = sub === 0;
+          const midi = getMidiNote(state.rootKey, state.octave, step.semitone);
+
+          const col = document.createElement('div');
+          col.id = `step-col-${stepIdx}`;
+          col.className = `rounded-xl p-2 border flex flex-col justify-between gap-2 transition-colors ${
+            isDownbeat ? 'bg-[#11131e] border-accentAmber/25' : 'bg-panel border-borderSubtle'
+          }`;
+
+          // Step Number + Playhead LED + Kick Badge
+          const topBar = document.createElement('div');
+          topBar.className = 'flex items-center justify-between';
+          topBar.innerHTML = `
+            <span class="font-mono text-[10px] font-bold ${isDownbeat ? 'text-accentAmber' : 'text-slate-400'}">
+              ${String(stepIdx + 1).padStart(2, '0')}${isDownbeat ? '·K' : ''}
+            </span>
+            <span id="step-led-${stepIdx}" class="w-2 h-2 rounded-full bg-slate-800 transition-all"></span>
+          `;
+          col.appendChild(topBar);
+
+          // Gate Toggle Pad
+          const gateBtn = document.createElement('button');
+          gateBtn.className = `w-full py-2.5 rounded-lg font-mono text-xs font-extrabold transition-all cursor-pointer ${
+            step.active
+              ? 'bg-accentCyan text-black led-cyan'
+              : 'bg-chassis text-slate-500 border border-borderSubtle hover:text-slate-300'
+          }`;
+          gateBtn.textContent = step.active ? freqToNoteLabel(midi) : 'REST';
+          gateBtn.addEventListener('click', () => {
+            step.active = !step.active;
+            renderSequencerGrid();
+          });
+          col.appendChild(gateBtn);
+
+          // Accent Toggle
+          const accBtn = document.createElement('button');
+          accBtn.className = `w-full py-1 rounded-md font-mono text-[10px] font-bold transition-all cursor-pointer ${
+            step.accent
+              ? 'bg-accentAmber text-black led-amber'
+              : 'bg-chassis text-slate-400 border border-borderSubtle hover:text-white'
+          }`;
+          accBtn.textContent = step.accent ? 'ACCENT ★' : 'ACCENT';
+          accBtn.addEventListener('click', () => {
+            step.accent = !step.accent;
+            if (step.accent && !step.active) step.active = true;
+            renderSequencerGrid();
+          });
+          col.appendChild(accBtn);
+
+          // Semitone Pitch Offset Selector (0 to +12)
+          const pitchWrap = document.createElement('div');
+          pitchWrap.innerHTML = `<div class="text-[9px] font-mono text-slate-400 mb-0.5">PITCH</div>`;
+          const pitchSel = document.createElement('select');
+          pitchSel.className = 'w-full bg-chassis text-white font-mono text-[10px] font-semibold rounded-md px-1 py-1 border border-borderSubtle focus:outline-none focus:border-accentCyan cursor-pointer';
+          for (let st = 0; st <= 12; st++) {
+            const opt = document.createElement('option');
+            opt.value = st;
+            opt.textContent = st === 0 ? '0 st (Root)' : `+${st} st`;
+            if (step.semitone === st) opt.selected = true;
+            pitchSel.appendChild(opt);
+          }
+          pitchSel.addEventListener('change', (e) => {
+            step.semitone = parseInt(e.target.value, 10);
+            renderSequencerGrid();
+          });
+          pitchWrap.appendChild(pitchSel);
+          col.appendChild(pitchWrap);
+
+          // Gate Length Slider (10% to 100%)
+          const gatePct = Math.round(step.gate * 100);
+          const gateWrap = document.createElement('div');
+          gateWrap.innerHTML = `
+            <div class="flex justify-between text-[9px] font-mono text-slate-400 mb-0.5">
+              <span>GATE</span>
+              <span id="step-gate-val-${stepIdx}" class="text-slate-200">${gatePct}%</span>
+            </div>
+          `;
+          const gateRange = document.createElement('input');
+          gateRange.type = 'range';
+          gateRange.min = '10';
+          gateRange.max = '100';
+          gateRange.step = '5';
+          gateRange.value = String(gatePct);
+          gateRange.className = 'w-full';
+          gateRange.addEventListener('input', (e) => {
+            const v = parseInt(e.target.value, 10);
+            step.gate = v / 100;
+            const lbl = document.getElementById(`step-gate-val-${stepIdx}`);
+            if (lbl) lbl.textContent = `${v}%`;
+          });
+          gateWrap.appendChild(gateRange);
+          col.appendChild(gateWrap);
+
+          stepsRow.appendChild(col);
+        }
+
+        beatCard.appendChild(stepsRow);
+        grid.appendChild(beatCard);
+      }
+
+      if (state.currentStep >= 0) {
+        updatePlayheadUI(state.currentStep);
+      }
+    }
+
+    function updatePlayheadUI(activeIdx) {
+      document.getElementById('hud-step').textContent = activeIdx >= 0 ? String(activeIdx + 1).padStart(2, '0') : '--';
+      for (let i = 0; i < 16; i++) {
+        const led = document.getElementById(`step-led-${i}`);
+        const col = document.getElementById(`step-col-${i}`);
+        if (!led || !col) continue;
+        if (i === activeIdx) {
+          led.className = 'w-2.5 h-2.5 rounded-full bg-accentEmerald led-emerald scale-110 transition-all';
+          col.classList.add('ring-1', 'ring-accentEmerald');
+        } else {
+          led.className = 'w-2 h-2 rounded-full bg-slate-800 transition-all';
+          col.classList.remove('ring-1', 'ring-accentEmerald');
+        }
+      }
+    }
+
+    function updateHeaderHUD() {
+      const rootMidi = getMidiNote(state.rootKey, state.octave, 0);
+      const rootFreq = midiToFreq(rootMidi);
+      const periodMs = 1000 / rootFreq;
+      const sixteenthMs = (60 / state.bpm / 4) * 1000;
+
+      document.getElementById('hud-root-freq').textContent = `${rootFreq.toFixed(1)} Hz`;
+      document.getElementById('hud-step-ms').textContent = `${sixteenthMs.toFixed(1)} ms`;
+      document.getElementById('hud-root-period').textContent = `${periodMs.toFixed(2)} ms`;
+
+      // Update Phase Alignment degree readouts
+      const delayDeg = ((state.synth.microDelay / periodMs) * 360) % 360;
+      const invertDeg = state.synth.phaseInvert ? 180 : 0;
+      const totalDeg = Math.round((state.synth.startPhase + delayDeg + invertDeg) % 360);
+
+      document.getElementById('val-micro-delay').textContent = `${state.synth.microDelay.toFixed(2)} ms (Δ ${Math.round(delayDeg)}°)`;
+      document.getElementById('hud-total-phase').textContent = `${totalDeg}°`;
+    }
+
+    function syncSynthUIToState() {
+      const s = state.synth;
+
+      // Module 01: Waveform & Sub
+      document.querySelectorAll('.wave-btn').forEach(btn => {
+        if (btn.dataset.wave === s.waveform) {
+          btn.className = 'wave-btn py-1.5 rounded-lg font-mono text-xs font-bold bg-accentCyan text-black shadow cursor-pointer';
+        } else {
+          btn.className = 'wave-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer';
+        }
+      });
+
+      const waveNames = { sawtooth: 'SAWTOOTH', square: 'SQUARE', fatsawtooth: 'FAT UNISON SAW' };
+      document.getElementById('val-wave-label').textContent = waveNames[s.waveform] || s.waveform.toUpperCase();
+
+      const fatInput = document.getElementById('input-fat-spread');
+      const fatVal = document.getElementById('val-fat-spread');
+      fatInput.value = s.fatSpread;
+      fatVal.textContent = `${s.fatSpread} cents`;
+      fatInput.disabled = s.waveform !== 'fatsawtooth';
+      fatVal.className = s.waveform === 'fatsawtooth' ? 'text-accentCyan font-bold' : 'text-slate-500 font-bold';
+
+      document.getElementById('input-sub-mix').value = s.subMix;
+      document.getElementById('val-sub-mix').textContent = `${s.subMix}%`;
+
+      const retrigBtn = document.getElementById('btn-phase-retrig');
+      if (s.phaseRetrig) {
+        retrigBtn.textContent = 'PHASE RETRIG: ON';
+        retrigBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-accentEmerald/15 text-accentEmerald border border-accentEmerald/40 cursor-pointer';
+      } else {
+        retrigBtn.textContent = 'PHASE RETRIG: OFF';
+        retrigBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-panel text-slate-400 border border-borderSubtle cursor-pointer';
+      }
+
+      // Module 02: Filter
+      document.getElementById('input-cutoff').value = s.cutoff;
+      document.getElementById('val-cutoff').textContent = `${s.cutoff} Hz`;
+      document.getElementById('input-res').value = s.resonance;
+      document.getElementById('val-res').textContent = s.resonance.toFixed(1);
+      document.getElementById('input-env-amt').value = s.envAmt;
+      document.getElementById('val-env-amt').textContent = `${s.envAmt} Hz`;
+      document.getElementById('input-flt-decay').value = s.fltDecay;
+      document.getElementById('val-flt-decay').textContent = `${s.fltDecay} ms`;
+      document.getElementById('input-accent-boost').value = s.accentBoost;
+      document.getElementById('val-accent-boost').textContent = `${s.accentBoost}%`;
+
+      // Module 03: VCA
+      document.getElementById('input-amp-atk').value = s.ampAttack;
+      document.getElementById('val-amp-atk').textContent = `${s.ampAttack} ms`;
+      document.getElementById('input-amp-dec').value = s.ampDecay;
+      document.getElementById('val-amp-dec').textContent = `${s.ampDecay} ms`;
+      const susPct = Math.round(s.ampSustain * 100);
+      document.getElementById('input-amp-sus').value = susPct;
+      document.getElementById('val-amp-sus').textContent = `${susPct}%`;
+      document.getElementById('input-amp-rel').value = s.ampRelease;
+      document.getElementById('val-amp-rel').textContent = `${s.ampRelease} ms`;
+
+      // Module 04: Drive & EQ
+      document.getElementById('input-drive').value = s.drive;
+      document.getElementById('val-drive').textContent = `${s.drive}%`;
+      document.getElementById('input-hpf').value = s.hpf;
+      document.getElementById('val-hpf').textContent = `${s.hpf} Hz`;
+      document.getElementById('input-mid-cut').value = s.midCut;
+      document.getElementById('val-mid-cut').textContent = `${s.midCut.toFixed(1)} dB`;
+      document.getElementById('input-bass-vol').value = s.bassVol;
+      document.getElementById('val-bass-vol').textContent = `${s.bassVol.toFixed(1)} dB`;
+
+      // Module 05: Sidechain Ducker
+      const scBtn = document.getElementById('btn-sc-toggle');
+      if (s.scEnabled) {
+        scBtn.textContent = 'ACTIVE';
+        scBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[10px] font-extrabold bg-accentRose text-white led-rose cursor-pointer';
+      } else {
+        scBtn.textContent = 'BYPASS';
+        scBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-panel text-slate-400 border border-borderSubtle cursor-pointer';
+      }
+
+      document.getElementById('btn-sc-curve').textContent = s.scCurve === 'exponential' ? 'EXP' : 'LIN';
+
+      const floorGain = Math.max(0.001, 1 - (s.scDepth / 100) * 0.999);
+      const dbAtten = s.scDepth === 0 ? 0 : (20 * Math.log10(floorGain));
+      document.getElementById('input-sc-depth').value = s.scDepth;
+      document.getElementById('val-sc-depth').textContent = `${s.scDepth}% (${dbAtten.toFixed(1)} dB)`;
+
+      document.getElementById('input-sc-atk').value = s.scAttack;
+      document.getElementById('val-sc-atk').textContent = `${s.scAttack.toFixed(1)}ms`;
+      document.getElementById('input-sc-hold').value = s.scHold;
+      document.getElementById('val-sc-hold').textContent = `${s.scHold}ms`;
+      document.getElementById('input-sc-rel').value = s.scRelease;
+      document.getElementById('val-sc-rel').textContent = `${s.scRelease}ms`;
+
+      // Module 06: Phase Alignment
+      document.getElementById('input-start-phase').value = s.startPhase;
+      document.getElementById('val-start-phase').textContent = `${s.startPhase}°`;
+      document.getElementById('input-micro-delay').value = s.microDelay;
+
+      const invBtn = document.getElementById('btn-phase-invert');
+      if (s.phaseInvert) {
+        invBtn.textContent = 'Ø POLARITY: 180°';
+        invBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[10px] font-extrabold bg-accentAmber text-black led-amber cursor-pointer';
+      } else {
+        invBtn.textContent = 'Ø POLARITY: 0°';
+        invBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold bg-panel text-slate-400 border border-borderSubtle hover:text-white cursor-pointer';
+      }
+
+      updateHeaderHUD();
+      drawVcaEnvelopeCanvas();
+      drawSidechainCanvas();
+    }
+
+    function drawVcaEnvelopeCanvas() {
+      const canvas = document.getElementById('canvas-vca-env');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Subtle Grid
+      ctx.strokeStyle = '#1e2235';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.5);
+      ctx.lineTo(w, h * 0.5);
+      ctx.stroke();
+
+      const s = state.synth;
+      const padX = 8;
+      const padY = 10;
+      const plotW = w - padX * 2;
+      const plotH = h - padY * 2;
+
+      const atkW = (s.ampAttack / 30) * (plotW * 0.22);
+      const decW = (s.ampDecay / 350) * (plotW * 0.42);
+      const susW = plotW * 0.16;
+      const relW = (s.ampRelease / 200) * (plotW * 0.20);
+      const susY = padY + (1 - s.ampSustain) * plotH;
+
+      const x0 = padX;
+      const y0 = h - padY;
+      const x1 = x0 + Math.max(4, atkW);
+      const y1 = padY;
+      const x2 = x1 + Math.max(10, decW);
+      const x3 = x2 + susW;
+      const x4 = Math.min(w - padX, x3 + Math.max(6, relW));
+
+      // Gradient Fill
+      const grad = ctx.createLinearGradient(0, padY, 0, h - padY);
+      grad.addColorStop(0, 'rgba(16, 185, 129, 0.32)');
+      grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x2, susY);
+      ctx.lineTo(x3, susY);
+      ctx.lineTo(x4, y0);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Contour Stroke
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x2, susY);
+      ctx.lineTo(x3, susY);
+      ctx.lineTo(x4, y0);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function drawSidechainCanvas() {
+      const canvas = document.getElementById('canvas-sc-curve');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const beatMs = (60 / state.bpm) * 1000;
+
+      // 16th-Note Subdivision Markers (4 subdivisions per beat)
+      for (let sub = 1; sub <= 3; sub++) {
+        const sx = (sub / 4) * w;
+        ctx.strokeStyle = sub === 1 ? 'rgba(6, 182, 212, 0.45)' : '#1e2235';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(sx, 0);
+        ctx.lineTo(sx, h);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      const s = state.synth;
+      const padY = 10;
+      const plotH = h - padY * 2;
+      const depth = s.scEnabled ? (s.scDepth / 100) : 0;
+
+      const topY = padY;
+      const floorY = padY + depth * plotH;
+
+      const xAtk = Math.min(w, (s.scAttack / beatMs) * w);
+      const xHold = Math.min(w, ((s.scAttack + s.scHold) / beatMs) * w);
+      const relSpanW = (s.scRelease / beatMs) * w;
+
+      ctx.beginPath();
+      ctx.moveTo(0, topY);
+      ctx.lineTo(xAtk, floorY);
+      ctx.lineTo(xHold, floorY);
+
+      const steps = 28;
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        const x = Math.min(w, xHold + t * relSpanW);
+        const curveProgress = s.scCurve === 'exponential' ? Math.pow(t, 2.2) : t;
+        const y = floorY - curveProgress * (floorY - topY);
+        ctx.lineTo(x, y);
+      }
+      if (xHold + relSpanW < w) {
+        ctx.lineTo(w, topY);
+      }
+
+      ctx.strokeStyle = s.scEnabled ? '#f43f5e' : '#64748b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function renderOscilloscopeLoop() {
+      const canvas = document.getElementById('canvas-scope');
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const dpr = window.devicePixelRatio || 1;
+          if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+            canvas.width = Math.round(rect.width * dpr);
+            canvas.height = Math.round(rect.height * dpr);
+          }
+          const ctx = canvas.getContext('2d');
+          ctx.save();
+          ctx.scale(dpr, dpr);
+
+          const w = rect.width;
+          const h = rect.height;
+          ctx.clearRect(0, 0, w, h);
+
+          // Center Zero-Crossing Axis
+          ctx.strokeStyle = '#1e2235';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, h * 0.5);
+          ctx.lineTo(w, h * 0.5);
+          ctx.stroke();
+
+          if (state.audioInitialized && audio.bassAnalyser && audio.kickAnalyser) {
+            const bassBuf = audio.bassAnalyser.getValue();
+            const kickBuf = audio.kickAnalyser.getValue();
+            const len = Math.min(bassBuf.length, kickBuf.length);
+
+            // Compute Live Phase Correlation
+            let sumBK = 0;
+            let sumB2 = 0;
+            let sumK2 = 0;
+            for (let i = 0; i < len; i++) {
+              const b = bassBuf[i];
+              const k = kickBuf[i];
+              sumBK += b * k;
+              sumB2 += b * b;
+              sumK2 += k * k;
+            }
+            const denom = Math.sqrt(sumB2 * sumK2);
+            const corrEl = document.getElementById('val-phase-corr');
+            if (denom > 0.0005) {
+              const corr = Math.max(-1, Math.min(1, sumBK / denom));
+              corrEl.textContent = `${corr >= 0 ? '+' : ''}${corr.toFixed(2)}`;
+              corrEl.className = corr >= 0.2
+                ? 'text-xs font-mono font-extrabold text-accentEmerald'
+                : corr >= -0.2
+                  ? 'text-xs font-mono font-extrabold text-accentAmber'
+                  : 'text-xs font-mono font-extrabold text-accentRose';
+            }
+
+            if (state.scopeMode === 'dual') {
+              // Kick Trace (Amber)
+              ctx.beginPath();
+              for (let i = 0; i < len; i++) {
+                const x = (i / (len - 1)) * w;
+                const y = h * 0.5 - kickBuf[i] * (h * 0.42);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+              }
+              ctx.strokeStyle = 'rgba(245, 158, 11, 0.85)';
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+
+              // Bass Trace (Cyan)
+              ctx.beginPath();
+              for (let i = 0; i < len; i++) {
+                const x = (i / (len - 1)) * w;
+                const y = h * 0.5 - bassBuf[i] * (h * 0.42);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+              }
+              ctx.strokeStyle = '#06b6d4';
+              ctx.lineWidth = 1.6;
+              ctx.stroke();
+            } else {
+              // Summed Low-End Trace (Emerald)
+              ctx.beginPath();
+              for (let i = 0; i < len; i++) {
+                const x = (i / (len - 1)) * w;
+                const y = h * 0.5 - ((bassBuf[i] + kickBuf[i]) * 0.5) * (h * 0.45);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+              }
+              ctx.strokeStyle = '#10b981';
+              ctx.lineWidth = 1.8;
+              ctx.stroke();
+            }
+          }
+
+          ctx.restore();
+        }
+      }
+      requestAnimationFrame(renderOscilloscopeLoop);
+    }
+
+    // --- SEQUENCE & VOICE PRESET MANAGEMENT ---
+    let toastTimer = null;
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('studio-toast');
+      const msgEl = document.getElementById('studio-toast-msg');
+      msgEl.textContent = msg;
+      toast.className = `fixed bottom-4 right-4 z-50 bg-chassis border ${
+        isError ? 'border-accentRose text-accentRose' : 'border-accentCyan/50 text-white'
+      } font-mono text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2`;
+      toast.classList.remove('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.add('hidden'), 2600);
+    }
+
+    function cloneSteps(steps) {
+      return steps.map(s => ({
+        active: Boolean(s.active),
+        accent: Boolean(s.accent),
+        semitone: Math.max(0, Math.min(12, parseInt(s.semitone, 10) || 0)),
+        gate: Math.max(0.10, Math.min(1.0, parseFloat(s.gate) || 0.72))
+      }));
+    }
+
+    function loadLibrariesFromStorage() {
+      try {
+        const rawSeqs = localStorage.getItem(STORAGE_KEYS.SEQUENCES);
+        if (rawSeqs) {
+          const parsed = JSON.parse(rawSeqs);
+          if (Array.isArray(parsed)) state.userSequences = parsed;
+        }
+      } catch (e) {}
+
+      try {
+        const rawVoices = localStorage.getItem(STORAGE_KEYS.VOICES);
+        if (rawVoices) {
+          const parsed = JSON.parse(rawVoices);
+          if (Array.isArray(parsed)) state.userVoices = parsed;
+        }
+      } catch (e) {}
+    }
+
+    function persistLibrariesToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.SEQUENCES, JSON.stringify(state.userSequences));
+        localStorage.setItem(STORAGE_KEYS.VOICES, JSON.stringify(state.userVoices));
+      } catch (e) {
+        showToast('Browser storage full', true);
+      }
+    }
+
+    function renderSequenceSelector() {
+      const select = document.getElementById('select-seq-preset');
+      select.innerHTML = '';
+
+      const fGroup = document.createElement('optgroup');
+      fGroup.label = 'Factory Sequences';
+      FACTORY_SEQUENCES.forEach(seq => {
+        const opt = document.createElement('option');
+        opt.value = seq.id;
+        opt.textContent = seq.name;
+        if (seq.id === state.activeSeqId) opt.selected = true;
+        fGroup.appendChild(opt);
+      });
+      select.appendChild(fGroup);
+
+      if (state.userSequences.length > 0) {
+        const uGroup = document.createElement('optgroup');
+        uGroup.label = 'User Saved Sequences';
+        state.userSequences.forEach(seq => {
+          const opt = document.createElement('option');
+          opt.value = seq.id;
+          opt.textContent = `★ ${seq.name}`;
+          if (seq.id === state.activeSeqId) opt.selected = true;
+          uGroup.appendChild(opt);
+        });
+        select.appendChild(uGroup);
+      }
+
+      const isUser = state.userSequences.some(s => s.id === state.activeSeqId);
+      document.getElementById('btn-seq-delete').disabled = !isUser;
+    }
+
+    function renderVoiceSelector() {
+      const select = document.getElementById('select-voice-preset');
+      select.innerHTML = '';
+
+      const fGroup = document.createElement('optgroup');
+      fGroup.label = 'Factory Voice Patches';
+      FACTORY_VOICES.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = v.name;
+        if (v.id === state.activeVoiceId) opt.selected = true;
+        fGroup.appendChild(opt);
+      });
+      select.appendChild(fGroup);
+
+      if (state.userVoices.length > 0) {
+        const uGroup = document.createElement('optgroup');
+        uGroup.label = 'User Saved Voices';
+        state.userVoices.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = `★ ${v.name}`;
+          if (v.id === state.activeVoiceId) opt.selected = true;
+          uGroup.appendChild(opt);
+        });
+        select.appendChild(uGroup);
+      }
+
+      const isUser = state.userVoices.some(v => v.id === state.activeVoiceId);
+      document.getElementById('btn-voice-delete').disabled = !isUser;
+    }
+
+    function loadSequenceById(id) {
+      const found = [...FACTORY_SEQUENCES, ...state.userSequences].find(s => s.id === id);
+      if (!found) return;
+      state.activeSeqId = found.id;
+      state.steps = cloneSteps(found.steps);
+      if (found.bpm) {
+        state.bpm = found.bpm;
+        document.getElementById('input-bpm').value = state.bpm;
+        document.getElementById('val-bpm').textContent = state.bpm;
+      }
+      if (found.rootKey && NOTE_NAMES.includes(found.rootKey)) {
+        state.rootKey = found.rootKey;
+        document.getElementById('select-key').value = state.rootKey;
+      }
+      if ([1, 2, 3].includes(found.octave)) {
+        state.octave = found.octave;
+        document.querySelectorAll('.oct-btn').forEach(b => {
+          if (parseInt(b.dataset.oct, 10) === state.octave) {
+            b.className = 'oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold bg-accentCyan text-black cursor-pointer';
+          } else {
+            b.className = 'oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer';
+          }
+        });
+      }
+      renderSequenceSelector();
+      renderSequencerGrid();
+      updateHeaderHUD();
+      syncAudioEngineToState();
+    }
+
+    function loadVoiceById(id) {
+      const found = [...FACTORY_VOICES, ...state.userVoices].find(v => v.id === id);
+      if (!found) return;
+      state.activeVoiceId = found.id;
+      Object.assign(state.synth, found.params);
+      renderVoiceSelector();
+      syncSynthUIToState();
+      syncAudioEngineToState();
+    }
+
+    function openSaveNameModal(target) {
+      state.saveDialogTarget = target;
+      const modal = document.getElementById('modal-save-name');
+      const title = document.getElementById('save-modal-title');
+      const input = document.getElementById('input-preset-name');
+      const confirmBtn = document.getElementById('btn-confirm-save-modal');
+
+      if (target === 'sequence') {
+        title.textContent = 'Save Sequence Preset';
+        title.className = 'text-xs font-mono font-bold uppercase tracking-wider text-accentCyan';
+        confirmBtn.className = 'px-4 py-2 rounded-xl font-mono text-xs font-extrabold bg-accentCyan text-black hover:brightness-110 cursor-pointer';
+        const cur = [...FACTORY_SEQUENCES, ...state.userSequences].find(s => s.id === state.activeSeqId);
+        input.value = cur && !cur.factory ? cur.name : `${state.rootKey}${state.octave} Groove ${state.userSequences.length + 1}`;
+      } else {
+        title.textContent = 'Save Voice Patch';
+        title.className = 'text-xs font-mono font-bold uppercase tracking-wider text-accentEmerald';
+        confirmBtn.className = 'px-4 py-2 rounded-xl font-mono text-xs font-extrabold bg-accentEmerald text-black hover:brightness-110 cursor-pointer';
+        const cur = [...FACTORY_VOICES, ...state.userVoices].find(v => v.id === state.activeVoiceId);
+        input.value = cur && !cur.factory ? cur.name : `Psy Voice ${state.userVoices.length + 1}`;
+      }
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 20);
+    }
+
+    function closeSaveNameModal() {
+      document.getElementById('modal-save-name').classList.add('hidden');
+      state.saveDialogTarget = null;
+    }
+
+    function commitSavePreset(name) {
+      const cleanName = (name || '').trim();
+      if (!cleanName) {
+        showToast('Enter a valid preset name', true);
+        return;
+      }
+
+      if (state.saveDialogTarget === 'sequence') {
+        const newId = `user_seq_${Date.now()}`;
+        state.userSequences.push({
+          id: newId,
+          name: cleanName,
+          factory: false,
+          bpm: state.bpm,
+          rootKey: state.rootKey,
+          octave: state.octave,
+          steps: cloneSteps(state.steps)
+        });
+        state.activeSeqId = newId;
+        persistLibrariesToStorage();
+        renderSequenceSelector();
+        showToast(`Saved sequence "${cleanName}"`);
+      } else if (state.saveDialogTarget === 'voice') {
+        const newId = `user_voice_${Date.now()}`;
+        state.userVoices.push({
+          id: newId,
+          name: cleanName,
+          factory: false,
+          params: { ...state.synth }
+        });
+        state.activeVoiceId = newId;
+        persistLibrariesToStorage();
+        renderVoiceSelector();
+        showToast(`Saved voice "${cleanName}"`);
+      }
+
+      closeSaveNameModal();
+    }
+
+    function slugify(str) {
+      return (str || 'preset').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'preset';
+    }
+
+    function downloadJsonFile(payload, filename) {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // --- OFFLINE WAV EXPORT ENGINE (TONE.OFFLINE) ---
+    function updateWavModalSpecs() {
+      const bars = state.wavOptions.bars;
+      const includeTail = state.wavOptions.includeTail;
+      const beatSec = 60 / state.bpm;
+      const loopSec = bars * 4 * beatSec;
+      const totalSec = loopSec + (includeTail ? beatSec : 0);
+
+      const activeSeq = [...FACTORY_SEQUENCES, ...state.userSequences].find(s => s.id === state.activeSeqId);
+      const seqSlug = slugify(activeSeq ? activeSeq.name : 'pattern');
+      const stemSuffix = state.wavOptions.stem === 'mix' ? '-kick-bass' : '';
+      const filename = `psy-bass-${seqSlug}-${state.bpm}bpm${stemSuffix}.wav`;
+
+      document.getElementById('wav-spec-tempo').textContent = `${state.bpm} BPM · ${state.rootKey}${state.octave}`;
+      document.getElementById('wav-spec-duration').textContent = `${totalSec.toFixed(2)} sec (${bars} ${bars === 1 ? 'Bar' : 'Bars'}${includeTail ? ' + 1 Beat Tail' : ''})`;
+      document.getElementById('wav-spec-filename').textContent = filename;
+      return { totalSec, filename };
+    }
+
+    function encodeAudioBufferToWav(audioBuffer) {
+      const numChannels = Math.min(2, audioBuffer.numberOfChannels);
+      const sampleRate = audioBuffer.sampleRate;
+      const numFrames = audioBuffer.length;
+      const bytesPerSample = 2;
+      const blockAlign = numChannels * bytesPerSample;
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = numFrames * blockAlign;
+
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      const writeStr = (offset, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, dataSize, true);
+
+      const ch0 = audioBuffer.getChannelData(0);
+      const ch1 = numChannels > 1 ? audioBuffer.getChannelData(1) : ch0;
+
+      let offset = 44;
+      for (let i = 0; i < numFrames; i++) {
+        const s0 = Math.max(-1, Math.min(1, ch0[i]));
+        const s1 = Math.max(-1, Math.min(1, ch1[i]));
+        view.setInt16(offset, s0 < 0 ? s0 * 0x8000 : s0 * 0x7FFF, true);
+        view.setInt16(offset + 2, s1 < 0 ? s1 * 0x8000 : s1 * 0x7FFF, true);
+        offset += 4;
+      }
+
+      return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    async function renderAndDownloadWav() {
+      const renderBtn = document.getElementById('btn-render-wav');
+      const progressWrap = document.getElementById('wav-progress-wrap');
+      const progressBar = document.getElementById('wav-progress-bar');
+      const progressPct = document.getElementById('wav-progress-pct');
+
+      renderBtn.disabled = true;
+      renderBtn.classList.add('opacity-50', 'pointer-events-none');
+      progressWrap.classList.remove('hidden');
+      progressBar.style.width = '30%';
+      progressPct.textContent = '30%';
+
+      const { totalSec, filename } = updateWavModalSpecs();
+      const bars = state.wavOptions.bars;
+      const totalSteps = bars * 16;
+      const includeKick = state.wavOptions.stem === 'mix';
+
+      const bpmSnap = state.bpm;
+      const keySnap = state.rootKey;
+      const octSnap = state.octave;
+      const kickVolSnap = state.kickVol;
+      const kickPunchSnap = state.kickPunch;
+      const kickDecaySnap = state.kickDecay;
+      const stepsSnap = cloneSteps(state.steps);
+      const synthSnap = { ...state.synth };
+
+      try {
+        const renderedBuffer = await Tone.Offline(({ transport }) => {
+          transport.bpm.value = bpmSnap;
+          const limiter = new Tone.Limiter(-1.0).toDestination();
+
+          const isFat = synthSnap.waveform === 'fatsawtooth';
+          const stdOsc = new Tone.Oscillator({
+            type: isFat ? 'sawtooth' : synthSnap.waveform,
+            frequency: 43.65,
+            phase: synthSnap.startPhase
+          }).start(0);
+
+          const fatOsc = new Tone.FatOscillator({
+            type: 'sawtooth',
+            frequency: 43.65,
+            count: 3,
+            spread: synthSnap.fatSpread,
+            phase: synthSnap.startPhase
+          }).start(0);
+
+          const stdOscGain = new Tone.Gain(isFat ? 0 : 1);
+          const fatOscGain = new Tone.Gain(isFat ? 1 : 0);
+
+          const subOsc = new Tone.Oscillator({
+            type: 'sine',
+            frequency: 21.825,
+            phase: synthSnap.startPhase
+          }).start(0);
+          const subGain = new Tone.Gain((synthSnap.subMix / 100) * 0.6);
+
+          const filter = new Tone.Filter({
+            type: 'lowpass',
+            frequency: synthSnap.cutoff,
+            rolloff: -24,
+            Q: synthSnap.resonance
+          });
+
+          const filterEnv = new Tone.FrequencyEnvelope({
+            attack: 0.002,
+            decay: Math.max(0.005, synthSnap.fltDecay / 1000),
+            sustain: 0.0,
+            release: 0.025,
+            baseFrequency: synthSnap.cutoff,
+            octaves: hzToOctaves(synthSnap.cutoff, synthSnap.envAmt),
+            exponent: 2.6
+          });
+          filterEnv.connect(filter.frequency);
+
+          const ampEnv = new Tone.AmplitudeEnvelope({
+            attack: Math.max(0.001, synthSnap.ampAttack / 1000),
+            decay: Math.max(0.01, synthSnap.ampDecay / 1000),
+            sustain: synthSnap.ampSustain,
+            release: Math.max(0.005, synthSnap.ampRelease / 1000)
+          });
+
+          const distortion = new Tone.Distortion({
+            distortion: (synthSnap.drive / 100) * 0.45,
+            oversample: '2x'
+          });
+
+          const hpf = new Tone.Filter({
+            type: 'highpass',
+            frequency: synthSnap.hpf,
+            rolloff: -12
+          });
+
+          const midEQ = new Tone.Filter({
+            type: 'peaking',
+            frequency: 300,
+            Q: 1.6,
+            gain: synthSnap.midCut
+          });
+
+          const sidechainGain = new Tone.Gain(1.0);
+          const polarityGain = new Tone.Gain(synthSnap.phaseInvert ? -1 : 1);
+          const microDelay = new Tone.Delay({
+            delayTime: Math.min(0.09, Math.max(0, synthSnap.microDelay / 1000)),
+            maxDelay: 0.1
+          });
+          const bassVolNode = new Tone.Volume(synthSnap.bassVol);
+
+          stdOsc.connect(stdOscGain);
+          fatOsc.connect(fatOscGain);
+          stdOscGain.connect(filter);
+          fatOscGain.connect(filter);
+          subOsc.connect(subGain);
+          subGain.connect(filter);
+
+          filter.connect(ampEnv);
+          ampEnv.connect(distortion);
+          distortion.connect(hpf);
+          hpf.connect(midEQ);
+          midEQ.connect(sidechainGain);
+          sidechainGain.connect(polarityGain);
+          polarityGain.connect(microDelay);
+          microDelay.connect(bassVolNode);
+          bassVolNode.connect(limiter);
+
+          let kickSynth = null;
+          let kickClick = null;
+          if (includeKick) {
+            const kickVolNode = new Tone.Volume(kickVolSnap).connect(limiter);
+            kickSynth = new Tone.MembraneSynth({
+              pitchDecay: Math.max(0.01, kickDecaySnap / 1000),
+              octaves: 5.5,
+              oscillator: { type: 'sine' },
+              envelope: { attack: 0.001, decay: 0.21, sustain: 0.0, release: 0.04 }
+            }).connect(kickVolNode);
+
+            kickClick = new Tone.NoiseSynth({
+              noise: { type: 'white' },
+              envelope: { attack: 0.0005, decay: 0.011, sustain: 0, release: 0.004 }
+            });
+            const clickFilter = new Tone.Filter({ type: 'bandpass', frequency: 3600, Q: 2.0 });
+            const kickClickGain = new Tone.Gain((kickPunchSnap / 100) * 0.4);
+            kickClick.connect(clickFilter);
+            clickFilter.connect(kickClickGain);
+            kickClickGain.connect(kickVolNode);
+          }
+
+          const sixteenthSec = 60 / bpmSnap / 4;
+          let lastScTime = -1;
+
+          for (let stepNum = 0; stepNum < totalSteps; stepNum++) {
+            const time = stepNum * sixteenthSec;
+            const stepIdx = stepNum % 16;
+
+            if (stepIdx % 4 === 0) {
+              if (includeKick && kickSynth && kickClick) {
+                const kickMidi = getMidiNote(keySnap, 1, 0);
+                const kickFreq = Math.max(40, Math.min(58, midiToFreq(kickMidi)));
+                kickSynth.triggerAttackRelease(kickFreq, '16n', time, 0.95);
+                if (kickPunchSnap > 0) {
+                  kickClick.triggerAttackRelease('64n', time, 0.85);
+                }
+              }
+
+              if (synthSnap.scEnabled && synthSnap.scDepth > 0) {
+                const t0 = Math.max(time, lastScTime + 0.0001);
+                const depthNorm = Math.min(1, Math.max(0, synthSnap.scDepth / 100));
+                const floorGain = Math.max(0.0001, 1 - depthNorm * 0.9999);
+                const atkSec = Math.max(0.0005, synthSnap.scAttack / 1000);
+                const holdSec = Math.max(0, synthSnap.scHold / 1000);
+                const relSec = Math.max(0.01, synthSnap.scRelease / 1000);
+
+                const tAttackEnd = t0 + atkSec;
+                const tHoldEnd = tAttackEnd + holdSec;
+                const tReleaseEnd = tHoldEnd + relSec;
+                lastScTime = tReleaseEnd;
+
+                sidechainGain.gain.cancelScheduledValues(t0);
+                sidechainGain.gain.setValueAtTime(1.0, t0);
+                sidechainGain.gain.linearRampToValueAtTime(floorGain, tAttackEnd);
+                sidechainGain.gain.setValueAtTime(floorGain, tHoldEnd);
+                if (synthSnap.scCurve === 'exponential') {
+                  sidechainGain.gain.exponentialRampToValueAtTime(1.0, tReleaseEnd);
+                } else {
+                  sidechainGain.gain.linearRampToValueAtTime(1.0, tReleaseEnd);
+                }
+              }
+            }
+
+            const stepData = stepsSnap[stepIdx];
+            if (stepData && stepData.active) {
+              const midi = getMidiNote(keySnap, octSnap, stepData.semitone);
+              const freq = midiToFreq(midi);
+
+              stdOsc.frequency.setValueAtTime(freq, time);
+              fatOsc.frequency.setValueAtTime(freq, time);
+              subOsc.frequency.setValueAtTime(freq * 0.5, time);
+
+              if (synthSnap.phaseRetrig) {
+                stdOsc.phase = synthSnap.startPhase;
+                fatOsc.phase = synthSnap.startPhase;
+                subOsc.phase = synthSnap.startPhase;
+              }
+
+              const boostMult = stepData.accent ? (1 + (synthSnap.accentBoost / 100) * 0.65) : 1.0;
+              const velocity = stepData.accent ? 1.0 : 0.84;
+
+              filterEnv.baseFrequency = synthSnap.cutoff;
+              filterEnv.octaves = hzToOctaves(synthSnap.cutoff, synthSnap.envAmt * boostMult);
+
+              const gateSec = Math.max(0.015, sixteenthSec * stepData.gate);
+              filterEnv.triggerAttackRelease(gateSec, time);
+              ampEnv.triggerAttackRelease(gateSec, time, velocity);
+            }
+          }
+
+          transport.start(0);
+        }, totalSec, 2, 44100);
+
+        progressBar.style.width = '85%';
+        progressPct.textContent = '85%';
+
+        const wavBlob = encodeAudioBufferToWav(renderedBuffer.get());
+
+        progressBar.style.width = '100%';
+        progressPct.textContent = '100%';
+
+        const url = URL.createObjectURL(wavBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        document.getElementById('modal-wav').classList.add('hidden');
+        showToast(`Exported ${filename}`);
+      } catch (err) {
+        console.error('WAV Render error:', err);
+        showToast('WAV render failed', true);
+      } finally {
+        renderBtn.disabled = false;
+        renderBtn.classList.remove('opacity-50', 'pointer-events-none');
+        progressWrap.classList.add('hidden');
+        progressBar.style.width = '0%';
+      }
+    }
+
+    // --- PLAYBACK TRANSPORT & UI EVENT BINDINGS ---
+    async function togglePlayback() {
+      await initAudioEngine();
+      const btn = document.getElementById('btn-play');
+      const iconPlay = document.getElementById('icon-play');
+      const iconStop = document.getElementById('icon-stop');
+      const label = document.getElementById('label-play');
+
+      if (!state.isPlaying) {
+        audio.lastScScheduleEnd = 0;
+        Tone.Transport.start('+0.03');
+        state.isPlaying = true;
+        btn.className = 'flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-extrabold text-xs bg-accentRose text-white hover:brightness-110 active:scale-95 transition-all led-rose cursor-pointer';
+        iconPlay.classList.add('hidden');
+        iconStop.classList.remove('hidden');
+        label.textContent = 'STOP';
+      } else {
+        Tone.Transport.stop();
+        state.isPlaying = false;
+        state.currentStep = -1;
+        updatePlayheadUI(-1);
+        btn.className = 'flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-extrabold text-xs bg-accentEmerald text-black hover:brightness-110 active:scale-95 transition-all led-emerald cursor-pointer';
+        iconPlay.classList.remove('hidden');
+        iconStop.classList.add('hidden');
+        label.textContent = 'PLAY';
+      }
+    }
+
+    function bindUIEvents() {
+      // Transport & Master Controls
+      document.getElementById('btn-play').addEventListener('click', togglePlayback);
+
+      document.getElementById('input-bpm').addEventListener('input', (e) => {
+        state.bpm = parseInt(e.target.value, 10);
+        document.getElementById('val-bpm').textContent = state.bpm;
+        updateHeaderHUD();
+        drawSidechainCanvas();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('select-key').addEventListener('change', (e) => {
+        state.rootKey = e.target.value;
+        updateHeaderHUD();
+        renderSequencerGrid();
+      });
+
+      document.querySelectorAll('.oct-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.octave = parseInt(btn.dataset.oct, 10);
+          document.querySelectorAll('.oct-btn').forEach(b => {
+            if (parseInt(b.dataset.oct, 10) === state.octave) {
+              b.className = 'oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold bg-accentCyan text-black cursor-pointer';
+            } else {
+              b.className = 'oct-btn px-1.5 py-0.5 rounded font-mono text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer';
+            }
+          });
+          updateHeaderHUD();
+          renderSequencerGrid();
+        });
+      });
+
+      // 4x4 Reference Kick Controls
+      const kickToggleBtn = document.getElementById('btn-kick-toggle');
+      kickToggleBtn.addEventListener('click', () => {
+        state.kickEnabled = !state.kickEnabled;
+        if (state.kickEnabled) {
+          kickToggleBtn.textContent = '4x4 KICK: ON';
+          kickToggleBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[11px] font-extrabold bg-accentAmber text-black led-amber transition cursor-pointer';
+        } else {
+          kickToggleBtn.textContent = '4x4 KICK: OFF';
+          kickToggleBtn.className = 'px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold bg-chassis text-slate-400 border border-borderSubtle transition cursor-pointer';
+        }
+      });
+
+      document.getElementById('input-kick-vol').addEventListener('input', (e) => {
+        state.kickVol = parseFloat(e.target.value);
+        document.getElementById('val-kick-vol').textContent = `${state.kickVol.toFixed(1)}dB`;
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-kick-punch').addEventListener('input', (e) => {
+        state.kickPunch = parseInt(e.target.value, 10);
+        document.getElementById('val-kick-punch').textContent = `${state.kickPunch}%`;
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-kick-decay').addEventListener('input', (e) => {
+        state.kickDecay = parseInt(e.target.value, 10);
+        document.getElementById('val-kick-decay').textContent = `${state.kickDecay}ms`;
+        syncAudioEngineToState();
+      });
+
+      // Scope Mode Toggle
+      const scopeModeBtn = document.getElementById('btn-scope-mode');
+      scopeModeBtn.addEventListener('click', () => {
+        state.scopeMode = state.scopeMode === 'dual' ? 'sum' : 'dual';
+        scopeModeBtn.textContent = state.scopeMode.toUpperCase();
+      });
+
+      // Tab Switching
+      const tabSeq = document.getElementById('tab-sequencer');
+      const tabSound = document.getElementById('tab-sound');
+      const viewSeq = document.getElementById('view-sequencer');
+      const viewSound = document.getElementById('view-sound');
+
+      tabSeq.addEventListener('click', () => {
+        tabSeq.className = 'px-4 py-1.5 rounded-xl font-mono text-xs font-extrabold bg-accentCyan text-black led-cyan transition cursor-pointer';
+        tabSound.className = 'px-4 py-1.5 rounded-xl font-mono text-xs font-bold bg-panel text-slate-400 hover:text-white border border-borderSubtle transition cursor-pointer';
+        viewSeq.classList.remove('hidden');
+        viewSound.classList.add('hidden');
+      });
+
+      tabSound.addEventListener('click', () => {
+        tabSound.className = 'px-4 py-1.5 rounded-xl font-mono text-xs font-extrabold bg-accentCyan text-black led-cyan transition cursor-pointer';
+        tabSeq.className = 'px-4 py-1.5 rounded-xl font-mono text-xs font-bold bg-panel text-slate-400 hover:text-white border border-borderSubtle transition cursor-pointer';
+        viewSound.classList.remove('hidden');
+        viewSeq.classList.add('hidden');
+        requestAnimationFrame(() => {
+          drawVcaEnvelopeCanvas();
+          drawSidechainCanvas();
+        });
+      });
+
+      // Sequence Preset Controls
+      document.getElementById('select-seq-preset').addEventListener('change', (e) => loadSequenceById(e.target.value));
+      document.getElementById('btn-seq-save').addEventListener('click', () => {
+        const userSeq = state.userSequences.find(s => s.id === state.activeSeqId);
+        if (userSeq) {
+          userSeq.bpm = state.bpm;
+          userSeq.rootKey = state.rootKey;
+          userSeq.octave = state.octave;
+          userSeq.steps = cloneSteps(state.steps);
+          persistLibrariesToStorage();
+          showToast(`Updated "${userSeq.name}"`);
+        } else {
+          openSaveNameModal('sequence');
+        }
+      });
+      document.getElementById('btn-seq-save-as').addEventListener('click', () => openSaveNameModal('sequence'));
+      document.getElementById('btn-seq-delete').addEventListener('click', () => {
+        const idx = state.userSequences.findIndex(s => s.id === state.activeSeqId);
+        if (idx === -1) return;
+        const removed = state.userSequences.splice(idx, 1)[0];
+        persistLibrariesToStorage();
+        loadSequenceById(FACTORY_SEQUENCES[0].id);
+        showToast(`Deleted "${removed.name}"`);
+      });
+      document.getElementById('btn-seq-export-json').addEventListener('click', () => {
+        const cur = [...FACTORY_SEQUENCES, ...state.userSequences].find(s => s.id === state.activeSeqId);
+        const name = cur ? cur.name : 'Custom Sequence';
+        downloadJsonFile({
+          type: 'psy-bass-sequence',
+          version: 1,
+          name,
+          bpm: state.bpm,
+          rootKey: state.rootKey,
+          octave: state.octave,
+          steps: cloneSteps(state.steps)
+        }, `psy-seq-${slugify(name)}.json`);
+        showToast('Exported sequence JSON');
+      });
+
+      const seqImportInput = document.getElementById('input-seq-import-file');
+      document.getElementById('btn-seq-import-json').addEventListener('click', () => seqImportInput.click());
+      seqImportInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (!Array.isArray(data.steps) || data.steps.length !== 16) throw new Error('Invalid format');
+            const newId = `user_seq_${Date.now()}`;
+            state.userSequences.push({
+              id: newId,
+              name: (data.name || file.name.replace(/\.json$/i, '')).slice(0, 40),
+              factory: false,
+              bpm: typeof data.bpm === 'number' ? Math.max(130, Math.min(155, data.bpm)) : state.bpm,
+              rootKey: NOTE_NAMES.includes(data.rootKey) ? data.rootKey : state.rootKey,
+              octave: [1, 2, 3].includes(data.octave) ? data.octave : state.octave,
+              steps: cloneSteps(data.steps)
+            });
+            persistLibrariesToStorage();
+            loadSequenceById(newId);
+            showToast('Imported sequence JSON');
+          } catch (err) {
+            showToast('Invalid sequence JSON', true);
+          } finally {
+            seqImportInput.value = '';
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Pattern Utilities (Shift Left, Shift Right, Clear, Randomize)
+      document.getElementById('btn-shift-left').addEventListener('click', () => {
+        const first = state.steps.shift();
+        state.steps.push(first);
+        renderSequencerGrid();
+      });
+
+      document.getElementById('btn-shift-right').addEventListener('click', () => {
+        const last = state.steps.pop();
+        state.steps.unshift(last);
+        renderSequencerGrid();
+      });
+
+      document.getElementById('btn-clear-pattern').addEventListener('click', () => {
+        state.steps.forEach(s => {
+          s.active = false;
+          s.accent = false;
+          s.semitone = 0;
+        });
+        renderSequencerGrid();
+      });
+
+      document.getElementById('btn-rand-pattern').addEventListener('click', () => {
+        const intervals = [0, 0, 0, 0, 7, 10, 12];
+        state.steps = Array.from({ length: 16 }, (_, i) => {
+          if (i % 4 === 0) return { active: false, accent: false, semitone: 0, gate: 0.70 };
+          const active = Math.random() > 0.18;
+          const accent = active && Math.random() > 0.62;
+          const semitone = accent ? intervals[Math.floor(Math.random() * intervals.length)] : 0;
+          const gate = +(0.55 + Math.random() * 0.35).toFixed(2);
+          return { active, accent, semitone, gate };
+        });
+        renderSequencerGrid();
+      });
+
+      // Voice Patch Controls
+      document.getElementById('select-voice-preset').addEventListener('change', (e) => loadVoiceById(e.target.value));
+      document.getElementById('btn-voice-save').addEventListener('click', () => {
+        const userVoice = state.userVoices.find(v => v.id === state.activeVoiceId);
+        if (userVoice) {
+          userVoice.params = { ...state.synth };
+          persistLibrariesToStorage();
+          showToast(`Updated "${userVoice.name}"`);
+        } else {
+          openSaveNameModal('voice');
+        }
+      });
+      document.getElementById('btn-voice-save-as').addEventListener('click', () => openSaveNameModal('voice'));
+      document.getElementById('btn-voice-delete').addEventListener('click', () => {
+        const idx = state.userVoices.findIndex(v => v.id === state.activeVoiceId);
+        if (idx === -1) return;
+        const removed = state.userVoices.splice(idx, 1)[0];
+        persistLibrariesToStorage();
+        loadVoiceById(FACTORY_VOICES[0].id);
+        showToast(`Deleted "${removed.name}"`);
+      });
+      document.getElementById('btn-voice-export-json').addEventListener('click', () => {
+        const cur = [...FACTORY_VOICES, ...state.userVoices].find(v => v.id === state.activeVoiceId);
+        const name = cur ? cur.name : 'Custom Voice';
+        downloadJsonFile({
+          type: 'psy-bass-voice',
+          version: 1,
+          name,
+          params: { ...state.synth }
+        }, `psy-voice-${slugify(name)}.json`);
+        showToast('Exported voice patch JSON');
+      });
+
+      const voiceImportInput = document.getElementById('input-voice-import-file');
+      document.getElementById('btn-voice-import-json').addEventListener('click', () => voiceImportInput.click());
+      voiceImportInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (!data.params || typeof data.params !== 'object') throw new Error('Invalid voice format');
+            const newId = `user_voice_${Date.now()}`;
+            const merged = { ...state.synth };
+            Object.keys(merged).forEach(k => {
+              if (k in data.params) merged[k] = data.params[k];
+            });
+            state.userVoices.push({
+              id: newId,
+              name: (data.name || file.name.replace(/\.json$/i, '')).slice(0, 40),
+              factory: false,
+              params: merged
+            });
+            persistLibrariesToStorage();
+            loadVoiceById(newId);
+            showToast('Imported voice patch JSON');
+          } catch (err) {
+            showToast('Invalid voice JSON', true);
+          } finally {
+            voiceImportInput.value = '';
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Module 01: Oscillator & Sub
+      document.querySelectorAll('.wave-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.synth.waveform = btn.dataset.wave;
+          syncSynthUIToState();
+          syncAudioEngineToState();
+        });
+      });
+
+      document.getElementById('input-fat-spread').addEventListener('input', (e) => {
+        state.synth.fatSpread = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-sub-mix').addEventListener('input', (e) => {
+        state.synth.subMix = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('btn-phase-retrig').addEventListener('click', () => {
+        state.synth.phaseRetrig = !state.synth.phaseRetrig;
+        syncSynthUIToState();
+      });
+
+      // Module 02: Filter & Env
+      document.getElementById('input-cutoff').addEventListener('input', (e) => {
+        state.synth.cutoff = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-res').addEventListener('input', (e) => {
+        state.synth.resonance = parseFloat(e.target.value);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-env-amt').addEventListener('input', (e) => {
+        state.synth.envAmt = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-flt-decay').addEventListener('input', (e) => {
+        state.synth.fltDecay = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-accent-boost').addEventListener('input', (e) => {
+        state.synth.accentBoost = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+      });
+
+      // Module 03: VCA Envelope
+      document.getElementById('input-amp-atk').addEventListener('input', (e) => {
+        state.synth.ampAttack = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-amp-dec').addEventListener('input', (e) => {
+        state.synth.ampDecay = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-amp-sus').addEventListener('input', (e) => {
+        state.synth.ampSustain = parseInt(e.target.value, 10) / 100;
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-amp-rel').addEventListener('input', (e) => {
+        state.synth.ampRelease = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      // Module 04: Drive & Sub-Clean EQ
+      document.getElementById('input-drive').addEventListener('input', (e) => {
+        state.synth.drive = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-hpf').addEventListener('input', (e) => {
+        state.synth.hpf = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-mid-cut').addEventListener('input', (e) => {
+        state.synth.midCut = parseFloat(e.target.value);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('input-bass-vol').addEventListener('input', (e) => {
+        state.synth.bassVol = parseFloat(e.target.value);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      // Module 05: Precision Sidechain Ducker
+      document.getElementById('btn-sc-toggle').addEventListener('click', () => {
+        state.synth.scEnabled = !state.synth.scEnabled;
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('btn-sc-curve').addEventListener('click', () => {
+        state.synth.scCurve = state.synth.scCurve === 'exponential' ? 'linear' : 'exponential';
+        syncSynthUIToState();
+      });
+
+      document.getElementById('input-sc-depth').addEventListener('input', (e) => {
+        state.synth.scDepth = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+      });
+
+      document.getElementById('input-sc-atk').addEventListener('input', (e) => {
+        state.synth.scAttack = parseFloat(e.target.value);
+        syncSynthUIToState();
+      });
+
+      document.getElementById('input-sc-hold').addEventListener('input', (e) => {
+        state.synth.scHold = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+      });
+
+      document.getElementById('input-sc-rel').addEventListener('input', (e) => {
+        state.synth.scRelease = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+      });
+
+      // Module 06: Kick-to-Bass Phase Alignment
+      document.getElementById('input-start-phase').addEventListener('input', (e) => {
+        state.synth.startPhase = parseInt(e.target.value, 10);
+        syncSynthUIToState();
+      });
+
+      document.getElementById('input-micro-delay').addEventListener('input', (e) => {
+        state.synth.microDelay = parseFloat(e.target.value);
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      document.getElementById('btn-phase-invert').addEventListener('click', () => {
+        state.synth.phaseInvert = !state.synth.phaseInvert;
+        syncSynthUIToState();
+        syncAudioEngineToState();
+      });
+
+      // WAV Export Modal Bindings
+      const wavModal = document.getElementById('modal-wav');
+      document.getElementById('btn-open-wav').addEventListener('click', () => {
+        updateWavModalSpecs();
+        wavModal.classList.remove('hidden');
+      });
+      document.getElementById('btn-close-wav').addEventListener('click', () => wavModal.classList.add('hidden'));
+      document.getElementById('btn-cancel-wav').addEventListener('click', () => wavModal.classList.add('hidden'));
+      document.getElementById('btn-render-wav').addEventListener('click', renderAndDownloadWav);
+
+      document.querySelectorAll('.wav-bars-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.wavOptions.bars = parseInt(btn.dataset.bars, 10);
+          document.querySelectorAll('.wav-bars-btn').forEach(b => {
+            if (parseInt(b.dataset.bars, 10) === state.wavOptions.bars) {
+              b.className = 'wav-bars-btn py-1.5 rounded-lg font-mono text-xs font-bold bg-accentCyan text-black shadow cursor-pointer';
+            } else {
+              b.className = 'wav-bars-btn py-1.5 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer';
+            }
+          });
+          updateWavModalSpecs();
+        });
+      });
+
+      document.querySelectorAll('.wav-stem-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.wavOptions.stem = btn.dataset.stem;
+          document.querySelectorAll('.wav-stem-btn').forEach(b => {
+            if (b.dataset.stem === state.wavOptions.stem) {
+              b.className = 'wav-stem-btn py-2 rounded-lg font-mono text-xs font-bold bg-accentCyan text-black shadow cursor-pointer';
+            } else {
+              b.className = 'wav-stem-btn py-2 rounded-lg font-mono text-xs font-bold text-slate-400 hover:text-white cursor-pointer';
+            }
+          });
+          updateWavModalSpecs();
+        });
+      });
+
+      document.getElementById('chk-wav-tail').addEventListener('change', (e) => {
+        state.wavOptions.includeTail = e.target.checked;
+        updateWavModalSpecs();
+      });
+
+      // Save Preset Modal Bindings
+      document.getElementById('btn-close-save-modal').addEventListener('click', closeSaveNameModal);
+      document.getElementById('btn-cancel-save-modal').addEventListener('click', closeSaveNameModal);
+      document.getElementById('btn-confirm-save-modal').addEventListener('click', () => {
+        commitSavePreset(document.getElementById('input-preset-name').value);
+      });
+      document.getElementById('input-preset-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitSavePreset(e.target.value);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeSaveNameModal();
+        }
+      });
+
+      // Keyboard Shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          wavModal.classList.add('hidden');
+          closeSaveNameModal();
+          return;
+        }
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlayback();
+        } else if (e.key.toLowerCase() === 'k') {
+          kickToggleBtn.click();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        drawVcaEnvelopeCanvas();
+        drawSidechainCanvas();
+      });
+    }
+
+    // --- BOOT APPLICATION ON WINDOW LOAD ---
+    window.onload = function () {
+      loadLibrariesFromStorage();
+      renderSequenceSelector();
+      renderVoiceSelector();
+      renderSequencerGrid();
+      syncSynthUIToState();
+      updateHeaderHUD();
+      bindUIEvents();
+      requestAnimationFrame(renderOscilloscopeLoop);
+    };
+  </script>
+</body>
+</html>
