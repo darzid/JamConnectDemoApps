@@ -93,9 +93,9 @@
         </div>
 
         <!-- Swing Control -->
-        <div class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+        <div style="width: 100%; max-width: 300pt" class="hw-inset rounded-lg px-2.5 py-1.5 flex items-center gap-2">
           <span class="font-mono-tech text-[10px] text-zinc-400">SWING</span>
-          <input id="swing-slider" type="range" min="0" max="50" value="14" class="hw-slider" />
+          <input id="swing-slider" style="width: 100%; " type="range" min="0" max="50" value="14" class="hw-slider" />
           <span id="swing-val" class="font-mono-tech text-[11px] text-amber-300 w-7 text-right">14%</span>
         </div>
 
@@ -168,37 +168,13 @@
 
     <!-- MODULE TAB NAVIGATION BAR -->
     <nav class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="tablist" aria-label="Drum Machine Modules">
-      <button id="tab-sequencer" data-tab="sequencer" role="tab" aria-selected="true" class="tab-btn tab-active rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
-        <span id="tab-led-sequencer" class="led on-amber"></span>
-        <span><span class="hidden sm:inline text-zinc-500 mr-1">01 //</span>SEQUENCER</span>
-      </button>
-      <button id="tab-voice" data-tab="voice" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
-        <span id="tab-led-voice" class="led"></span>
-        <span><span class="hidden sm:inline text-zinc-500 mr-1">02 //</span>ANALOG VOICE</span>
-      </button>
-      <button id="tab-fx" data-tab="fx" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
-        <span id="tab-led-fx" class="led"></span>
-        <span><span class="hidden sm:inline text-zinc-500 mr-1">03 //</span>TRACK FX &amp; MIX</span>
-      </button>
-      <button id="tab-fills" data-tab="fills" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
-        <span id="tab-led-fills" class="led"></span>
-        <span><span class="hidden sm:inline text-zinc-500 mr-1">04 //</span>FILLS</span>
-      </button>
-      <button id="tab-jam" data-tab="jam" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
-        <span id="tab-led-jam" class="led"></span>
-        <span><span class="hidden sm:inline text-zinc-500 mr-1">05 //</span>JAM</span>
-      </button>
-      <button id="tab-midi" data-tab="midi" role="tab" aria-selected="false" class="tab-btn rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
-        <span id="tab-led-midi" class="led"></span>
-        <span><span class="hidden sm:inline text-zinc-500 mr-1">06 //</span>MIDI</span>
-      </button>
     </nav>
 
     <!-- TABBED MODULE WORKSPACE -->
     <main>
 
       <!-- MODULE 01: 16-STEP BREAKBEAT SEQUENCER & P-LOCK EDITOR -->
-      <section id="panel-sequencer" class="module-panel hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+      <section id="panel-sequencer" title="SEQUENCER" class="module-panel hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
         <div>
           <!-- Sequencer Mode & Tools Header -->
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -305,7 +281,7 @@
       </section>
 
       <!-- MODULE 02: SINGLE ANALOG DRUM VOICE + SELF-SAMPLER -->
-      <section id="panel-voice" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+      <section id="panel-voice" title="ANALOG VOICE" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
         <!-- Section Header & Quick Recipes -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
           <div>
@@ -386,7 +362,7 @@
       </section>
 
       <!-- MODULE 03: SELECTED TRACK SAMPLE ENGINE, INSERT FX & MASTER BUS -->
-      <section id="panel-fx" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 space-y-4">
+      <section id="panel-fx" title="TRACK FX &amp; MIX" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 space-y-4">
         <!-- Selected Track Insert FX -->
         <div>
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-2.5 mb-3">
@@ -468,7 +444,7 @@
       </section>
 
       <!-- MODULE 04: PERFORMANCE FILLS (MASTER FILTER, ALL-CHANNEL ROLLS & 8-BEAT REVERB BUILD) -->
-      <section id="panel-fills" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 space-y-3">
+      <section id="panel-fills" title="FILLS" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-2.5">
           <div class="flex items-center gap-2">
             <span class="led on-cyan"></span>
@@ -620,7 +596,7 @@
       </section>
 
       <!-- MODULE 05: JAM -->
-      <section id="panel-jam" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+      <section id="panel-jam" title="JAM" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
         <!-- Section Header & Quick Recipes -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
           <div>
@@ -638,7 +614,7 @@
       </section>
 
       <!-- MODULE 06: MIDI -->
-      <section id="panel-midi" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
+      <section id="panel-midi" title="MIDI" class="module-panel hidden hw-panel rounded-xl p-3 sm:p-4 flex flex-col justify-between gap-3">
         <!-- Section Header & Quick Recipes -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
           <div>
