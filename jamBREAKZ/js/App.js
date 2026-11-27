@@ -67,6 +67,14 @@ export class App {
     
     lucide.createIcons();
 
+		this.createTabButtons();
+    
+    // Module Tab Navigation
+    this.tabButtons = document.querySelectorAll('[data-tab]');
+    this.tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
+    });
+    
     this.btnPlay = document.getElementById('btn-play');
     this.bpmInput = document.getElementById('bpm-input');
     
@@ -98,11 +106,28 @@ export class App {
     this.loadKitPreset('classic', false);
     this.loadBreakPattern('electro');
     this.selectTrack(0);
+    
+    
     this.switchTab('sequencer');
     this.scope.init();
     this.bindEvents();
   }
 
+	createTabButtons() {
+		var tabList = document.querySelector("nav[role='tablist']");
+		var allModulePanels = document.querySelectorAll("section.module-panel");
+		allModulePanels.forEach(panel => {
+			let panelKey = panel.id.split("-")[1];
+			let panelTitle = panel.title;
+			let tabButtonHtml = `
+				<button id="tab-${panelKey}" data-tab="${panelKey}" role="tab" aria-selected="true" class="tab-btn tab-active rounded-xl px-3 py-2.5 font-mono-tech text-xs font-bold flex items-center justify-center gap-2 cursor-pointer">
+        	<span id="tab-led-${panelKey}" class="led on-amber"></span>
+        	<span>${panelTitle}</span>
+      	</button>`;
+      tabList.innerHTML += tabButtonHtml;
+		});
+	}
+	
   onStateChanged(state) {
     this.bpmInput.disabled = !state.canChangeBpm;
     
@@ -662,11 +687,18 @@ export class App {
 
     // Keyboard shortcuts: Space (Play/Stop), 1/2/3/4 (Module Tabs)
     window.addEventListener('keydown', (e) => {
+    	let tabKeys = {};
+    	for (let tabIndex = 0; tabIndex < this.tabButtons.length; tabIndex++) {
+    		tabKeys[`${tabIndex + 1}`] = this.tabButtons[tabIndex].dataset.tab;
+    	}
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.code === 'Space') {
         e.preventDefault();
         this.btnPlay.click();
-      } else if (e.key === '1') {
+      } else if (tabKeys[e.key]) {
+      	this.switchTab(tabKeys[e.key]);
+      }
+    /*  else if (e.key === '1') {
         this.switchTab('sequencer');
       } else if (e.key === '2') {
         this.switchTab('voice');
@@ -674,13 +706,10 @@ export class App {
         this.switchTab('fx');
       } else if (e.key === '4') {
         this.switchTab('fills');
-      }
+      }*/
     });
 
-    // Module Tab Navigation
-    document.querySelectorAll('[data-tab]').forEach((btn) => {
-      btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
-    });
+
 
     // BPM Controls
     const updateBpm = (val) => {
@@ -690,8 +719,8 @@ export class App {
       this.audio.setBpm(clamped);
     };
     this.bpmInput.addEventListener('change', () => updateBpm(Number(this.bpmInput.value)));
-    document.getElementById('bpm-dec').addEventListener('click', () => updateBpm(this.state.bpm - 2));
-    document.getElementById('bpm-inc').addEventListener('click', () => updateBpm(this.state.bpm + 2));
+    document.getElementById('bpm-dec').addEventListener('click', () => updateBpm(this.state.bpm - 1));
+    document.getElementById('bpm-inc').addEventListener('click', () => updateBpm(this.state.bpm + 1));
 
     // Swing Control
     const swingSlider = document.getElementById('swing-slider');

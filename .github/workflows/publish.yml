@@ -64,7 +64,8 @@ jobs:
           mkdir -p _site/jamVoice
           cp -r ./jamVoice/* _site/jamVoice
           
-
+          mkdir -p _site/jamBASS
+          cp -r ./jamBASS/* _site/jamBASS
           
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
